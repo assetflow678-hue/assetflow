@@ -236,7 +236,7 @@ export default function RoomDetailPage() {
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="px-2">
                 <Download className="mr-2 h-4 w-4" />
                 Xuất Báo Cáo
               </Button>
@@ -255,7 +255,7 @@ export default function RoomDetailPage() {
 
           <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="px-2">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Thêm
               </Button>
