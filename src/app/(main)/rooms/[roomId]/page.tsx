@@ -146,7 +146,7 @@ export default function RoomDetailPage() {
             asset.id,
             asset.name,
             asset.dateAdded,
-            asset.status
+            statusTranslations[asset.status]
         ]),
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
     });
@@ -234,25 +234,6 @@ export default function RoomDetailPage() {
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Tài sản ({assets.length})</h2>
         <div className="flex flex-wrap gap-2 justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Xuất Báo Cáo
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <Download className="mr-2 h-4 w-4" />
-                Danh sách tài sản (PDF)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportQRCodesPDF}>
-                <QrCode className="mr-2 h-4 w-4" />
-                Mã QR tài sản (PDF)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button size="sm">
@@ -305,6 +286,25 @@ export default function RoomDetailPage() {
               </Form>
             </SheetContent>
           </Sheet>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Xuất Báo Cáo
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <Download className="mr-2 h-4 w-4" />
+                Danh sách tài sản (PDF)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportQRCodesPDF}>
+                <QrCode className="mr-2 h-4 w-4" />
+                Mã QR tài sản (PDF)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
