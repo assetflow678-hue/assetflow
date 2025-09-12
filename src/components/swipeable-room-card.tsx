@@ -26,7 +26,8 @@ import Link from 'next/link';
 import { useRef, useState, type TouchEvent } from 'react';
 import { cn } from '@/lib/utils';
 
-const SWIPE_THRESHOLD = -80; // px to swipe left to reveal actions
+const SWIPE_THRESHOLD_OPEN = -80; // px to swipe left to reveal actions
+const SWIPE_THRESHOLD_CLOSE = 50; // px to swipe right to close actions
 const ACTIONS_WIDTH = 150; // Total width of the actions container
 
 interface SwipeableRoomCardProps {
@@ -40,33 +41,37 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
+  const startDragX = useRef(0); // The value of dragX when the drag started
 
   const handleDragStart = (e: TouchEvent<HTMLDivElement>) => {
-    // Don't drag if swipe is already active
-    if (dragX < 0) return;
-    
     setIsDragging(true);
     dragStartX.current = e.targetTouches[0].clientX;
+    startDragX.current = dragX; // Store the current translation
   };
 
   const handleDragMove = (e: TouchEvent<HTMLDivElement>) => {
     if (!isDragging) return;
     const currentX = e.targetTouches[0].clientX;
     const deltaX = currentX - dragStartX.current;
-    
-    // Only allow dragging left, and not past the actions width
-    if (deltaX < 10 && deltaX > -ACTIONS_WIDTH - 20) {
-      setDragX(deltaX);
+    const newDragX = startDragX.current + deltaX;
+
+    // Only allow dragging left, not past the actions width, and not past the original position
+    if (newDragX <= 5 && newDragX >= -ACTIONS_WIDTH - 20) {
+      setDragX(newDragX);
     }
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
+    
     // Snap open or closed
-    if (dragX < SWIPE_THRESHOLD) {
+    if (dragX < SWIPE_THRESHOLD_OPEN) {
       setDragX(-ACTIONS_WIDTH); // Snap open
-    } else {
-      setDragX(0); // Snap closed
+    } else if (dragX > startDragX.current + SWIPE_THRESHOLD_CLOSE) {
+       setDragX(0); // Snap closed if swiped right enough
+    }
+    else {
+      setDragX(startDragX.current); // Snap back to where it was
     }
     dragStartX.current = 0;
   };
@@ -108,22 +113,22 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
         {/* Card Content */}
         <div
             ref={cardRef}
-            className="transition-transform duration-200 ease-in-out w-full"
+            className="transition-transform duration-200 ease-in-out w-full bg-card"
             style={{ transform: `translateX(${dragX}px)` }}
             onTouchStart={handleDragStart}
             onTouchMove={handleDragMove}
             onTouchEnd={handleDragEnd}
         >
             <Link href={`/rooms/${room.id}`} draggable="false" onClickCapture={(e) => {
-                // Prevent navigation if card was swiped
-                if (dragX !== 0) {
+                // Prevent navigation if card was swiped or is open
+                if (dragX !== 0 || startDragX.current !== 0) {
                     e.preventDefault();
                     closeActions();
                 }
             }}>
                 <Card className={cn(
-                    "h-full transition-colors",
-                    dragX === 0 ? "hover:bg-accent" : ""
+                    "h-full transition-colors rounded-none sm:rounded-lg border-x-0 sm:border-x",
+                     dragX === 0 ? "hover:bg-accent" : ""
                 )}>
                     <CardHeader className="p-4 pb-2">
                         <CardTitle className="flex items-center gap-2 text-lg">
