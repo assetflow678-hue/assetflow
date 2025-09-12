@@ -26,8 +26,8 @@ import Link from 'next/link';
 import { useRef, useState, type TouchEvent } from 'react';
 import { cn } from '@/lib/utils';
 
-const SWIPE_THRESHOLD_OPEN = -80; // px to swipe left to reveal actions
-const SWIPE_THRESHOLD_CLOSE = 50; // px to swipe right to close actions
+const SWIPE_THRESHOLD_OPEN = 80; // px to swipe right to reveal actions
+const SWIPE_THRESHOLD_CLOSE = -50; // px to swipe left to close actions
 const ACTIONS_WIDTH = 160; // Total width of the actions container
 
 interface SwipeableRoomCardProps {
@@ -55,8 +55,8 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
     const deltaX = currentX - dragStartX.current;
     const newDragX = startDragX.current + deltaX;
 
-    // Only allow dragging left, not past the actions width, and not past the original position
-    if (newDragX <= 5 && newDragX >= -ACTIONS_WIDTH - 20) {
+    // Only allow dragging right, not past the actions width, and not past the original position
+    if (newDragX >= -5 && newDragX <= ACTIONS_WIDTH + 20) {
       setDragX(newDragX);
     }
   };
@@ -65,10 +65,10 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
     setIsDragging(false);
     
     // Snap open or closed
-    if (dragX < SWIPE_THRESHOLD_OPEN) {
-      setDragX(-ACTIONS_WIDTH); // Snap open
-    } else if (dragX > startDragX.current + SWIPE_THRESHOLD_CLOSE) {
-       setDragX(0); // Snap closed if swiped right enough
+    if (dragX > SWIPE_THRESHOLD_OPEN) {
+      setDragX(ACTIONS_WIDTH); // Snap open
+    } else if (dragX < startDragX.current + SWIPE_THRESHOLD_CLOSE) {
+       setDragX(0); // Snap closed if swiped left enough
     }
     else {
       setDragX(startDragX.current); // Snap back to where it was
@@ -84,7 +84,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
   return (
     <div className="relative w-full overflow-hidden rounded-lg">
         {/* Action Buttons */}
-        <div className="absolute top-0 right-0 flex h-full items-center">
+        <div className="absolute top-0 left-0 flex h-full items-center">
             <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
                 <FilePenLine className="h-5 w-5" />
             </Button>
@@ -127,7 +127,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
                 }
             }}>
                 <Card className={cn(
-                    "h-full transition-colors",
+                    "h-full transition-colors rounded-lg",
                      dragX === 0 ? "hover:bg-accent" : ""
                 )}>
                     <CardHeader className="p-4 pb-2">
