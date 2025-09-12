@@ -39,10 +39,10 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-headline">Báo cáo tài sản</h1>
+        <h1 className="text-xl font-bold font-headline">Báo cáo tài sản</h1>
         <div className="flex gap-2">
-            <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Tải CSV</Button>
-            <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Tải PDF</Button>
+            <Button variant="outline" size="sm"><Download className="mr-2 h-4 w-4" /> CSV</Button>
+            <Button variant="outline" size="sm"><Download className="mr-2 h-4 w-4" /> PDF</Button>
         </div>
       </div>
 
@@ -64,9 +64,9 @@ export default function ReportsPage() {
                         {roomData.assets.length > 0 ? (
                             roomData.assets.map((asset) => (
                             <TableRow key={asset.id}>
-                                <TableCell className="font-medium">{asset.id}</TableCell>
-                                <TableCell>{asset.name}</TableCell>
-                                <TableCell>{asset.dateAdded}</TableCell>
+                                <TableCell className="font-medium text-sm">{asset.id}</TableCell>
+                                <TableCell className="text-sm">{asset.name}</TableCell>
+                                <TableCell className="text-sm">{asset.dateAdded}</TableCell>
                                 <TableCell><StatusBadge status={asset.status} /></TableCell>
                             </TableRow>
                             ))

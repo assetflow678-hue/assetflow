@@ -72,10 +72,10 @@ export default function RoomsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-headline">Quản lý phòng</h1>
+        <h1 className="text-xl font-bold font-headline">Quản lý phòng</h1>
         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
-            <Button>
+            <Button size="sm">
               <PlusCircle className="mr-2 h-4 w-4" />
               Thêm phòng
             </Button>
@@ -131,17 +131,17 @@ export default function RoomsPage() {
           <Link href={`/rooms/${room.id}`} key={room.id}>
             <Card className="h-full hover:bg-accent transition-colors">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <Warehouse className="h-5 w-5 text-primary" />
                   {room.name}
                 </CardTitle>
-                <CardDescription className="flex items-center gap-2 pt-1">
+                <CardDescription className="flex items-center gap-2 pt-1 text-xs">
                   <User className="h-4 w-4" />
                   {room.manager}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   Số lượng tài sản:{' '}
                   <span className="font-bold text-foreground">
                     {getAssetsByRoomId(room.id).length}
@@ -155,5 +155,3 @@ export default function RoomsPage() {
     </div>
   );
 }
-
-    

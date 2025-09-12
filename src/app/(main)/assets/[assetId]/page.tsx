@@ -143,17 +143,17 @@ export default function AssetDetailPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold font-headline">{asset.name}</h1>
-          <p className="text-muted-foreground">{asset.id}</p>
+          <h1 className="text-xl font-bold font-headline">{asset.name}</h1>
+          <p className="text-sm text-muted-foreground">{asset.id}</p>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Thông tin chi tiết</CardTitle>
+            <CardTitle className="text-lg">Thông tin chi tiết</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 text-sm">
             <div className="flex items-center gap-4">
               <Tag className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">Tên tài sản:</span>
@@ -189,32 +189,32 @@ export default function AssetDetailPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Mã QR</CardTitle>
+                    <CardTitle className="text-lg">Mã QR</CardTitle>
                     <CardDescription>Quét để xem chi tiết hoặc in nhãn dán.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center text-center p-4">
                     <div className="bg-white p-2 rounded-md border">
                         <Image
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
                             `https://assetflow.app/assets/${asset.id}`
                         )}`}
                         alt={`QR code for ${asset.id}`}
-                        width={200}
-                        height={200}
+                        width={150}
+                        height={150}
                         />
                     </div>
-                    <p className="mt-2 text-sm font-semibold tracking-widest">{asset.id}</p>
+                    <p className="mt-2 text-xs font-semibold tracking-widest">{asset.id}</p>
                 </CardContent>
             </Card>
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Hành động</CardTitle>
+                    <CardTitle className="text-lg">Hành động</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline"><Wrench className="mr-2 h-4 w-4" />Cập nhật tình trạng</Button>
+                            <Button variant="outline" size="sm"><Wrench className="mr-2 h-4 w-4" />Cập nhật tình trạng</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
@@ -247,7 +247,7 @@ export default function AssetDetailPage() {
 
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline"><Move className="mr-2 h-4 w-4" />Chuyển phòng</Button>
+                            <Button variant="outline" size="sm"><Move className="mr-2 h-4 w-4" />Chuyển phòng</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
@@ -276,7 +276,7 @@ export default function AssetDetailPage() {
                     </Dialog>
 
                     <Dialog>
-                        <DialogTrigger asChild><Button><Sparkles className="mr-2 h-4 w-4" />Gợi ý tình trạng (AI)</Button></DialogTrigger>
+                        <DialogTrigger asChild><Button size="sm"><Sparkles className="mr-2 h-4 w-4" />Gợi ý tình trạng (AI)</Button></DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>AI Gợi ý tình trạng</DialogTitle>

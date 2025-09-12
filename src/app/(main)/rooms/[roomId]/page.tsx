@@ -131,16 +131,16 @@ export default function RoomDetailPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold font-headline">{room.name}</h1>
-          <p className="text-muted-foreground">Quản lý bởi: {room.manager}</p>
+          <h1 className="text-xl font-bold font-headline">{room.name}</h1>
+          <p className="text-sm text-muted-foreground">Quản lý bởi: {room.manager}</p>
         </div>
       </div>
       
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Danh sách tài sản</h2>
+        <h2 className="text-lg font-semibold">Danh sách tài sản</h2>
         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
-            <Button>
+            <Button size="sm">
               <PlusCircle className="mr-2 h-4 w-4" />
               Thêm tài sản
             </Button>
@@ -208,10 +208,10 @@ export default function RoomDetailPage() {
               assets.map((asset) => (
                 <TableRow key={asset.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/assets/${asset.id}`} className="hover:underline">{asset.id}</Link>
+                    <Link href={`/assets/${asset.id}`} className="hover:underline text-sm">{asset.id}</Link>
                   </TableCell>
-                  <TableCell>{asset.name}</TableCell>
-                  <TableCell>{asset.dateAdded}</TableCell>
+                  <TableCell className="text-sm">{asset.name}</TableCell>
+                  <TableCell className="text-sm">{asset.dateAdded}</TableCell>
                   <TableCell><StatusBadge status={asset.status} /></TableCell>
                   <TableCell>
                     <DropdownMenu>
