@@ -130,7 +130,7 @@ export default function RoomsPage() {
         {rooms.map((room) => (
           <Link href={`/rooms/${room.id}`} key={room.id}>
             <Card className="h-full hover:bg-accent transition-colors">
-              <CardHeader>
+              <CardHeader className="p-4 pb-2">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Warehouse className="h-5 w-5 text-primary" />
                   {room.name}
@@ -140,7 +140,7 @@ export default function RoomsPage() {
                   {room.manager}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 pt-0">
                 <div className="text-xs text-muted-foreground">
                   Số lượng tài sản:{' '}
                   <span className="font-bold text-foreground">
