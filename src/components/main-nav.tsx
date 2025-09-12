@@ -48,13 +48,17 @@ export function MainNav({ onLinkClick }: { onLinkClick?: () => void }) {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
-      <div className="flex h-14 items-center">
-        <Logo />
-      </div>
-      <nav className="flex flex-col gap-2 text-base font-medium">
-        {navLinks.map(renderLink)}
-      </nav>
+    <div className="flex h-full flex-col gap-4">
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link href="/">
+              <Logo />
+            </Link>
+        </div>
+        <nav className="flex flex-col gap-2 text-base font-medium p-4 pt-0">
+            {navLinks.map(renderLink)}
+        </nav>
     </div>
   );
 }
+
+    
