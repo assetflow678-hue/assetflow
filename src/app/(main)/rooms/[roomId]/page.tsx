@@ -234,14 +234,25 @@ export default function RoomDetailPage() {
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Tài sản ({assets.length})</h2>
         <div className="flex flex-wrap gap-2 justify-end">
-          <Button variant="outline" size="sm" onClick={handleExportPDF}>
-            <Download className="mr-2 h-4 w-4" />
-            Xuất PDF
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportQRCodesPDF}>
-            <QrCode className="mr-2 h-4 w-4" />
-            Xuất QR (PDF)
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Xuất Báo Cáo
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <Download className="mr-2 h-4 w-4" />
+                Danh sách tài sản (PDF)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportQRCodesPDF}>
+                <QrCode className="mr-2 h-4 w-4" />
+                Mã QR tài sản (PDF)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button size="sm">
