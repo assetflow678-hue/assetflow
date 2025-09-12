@@ -79,11 +79,7 @@ export default function MainLayout({
         </header>
         <main className="flex-1 p-4 pb-20 md:p-6 md:pb-6">{children}</main>
       </div>
-      <div className="md:hidden">
-        <MobileNav />
-      </div>
+      <MobileNav />
     </div>
   );
 }
-
-    
