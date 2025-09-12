@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, LayoutGrid } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -15,16 +15,11 @@ export function MobileNav() {
       label: 'Phòng',
       icon: <LayoutGrid className="h-6 w-6" />,
     },
-    {
-      href: '/reports',
-      label: 'Báo cáo',
-      icon: <ClipboardList className="h-6 w-6" />,
-    },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t bg-card shadow-t-lg">
-      <div className="grid h-16 grid-cols-2">
+      <div className="grid h-16 grid-cols-1">
         {navLinks.map((link) => {
           const isActive = pathname.startsWith(link.href);
           return (

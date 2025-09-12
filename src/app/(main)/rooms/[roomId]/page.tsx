@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
   PlusCircle,
   MoreHorizontal,
   ArrowLeft,
+  Download,
 } from 'lucide-react';
 
 import { getRoomById, getAssetsByRoomId } from '@/lib/mock-data';
@@ -50,6 +51,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
+import { CalendarDays } from 'lucide-react';
 
 const addAssetSchema = z.object({
   name: z.string().min(2, { message: 'Tên tài sản phải có ít nhất 2 ký tự' }),
@@ -91,7 +94,12 @@ export default function RoomDetailPage() {
   });
 
   if (!room) {
-    notFound();
+    return (
+      <div>
+        <h1>Phòng không tìm thấy</h1>
+        <Link href="/rooms">Quay lại danh sách phòng</Link>
+      </div>
+    );
   }
 
   function onSubmit(values: z.infer<typeof addAssetSchema>) {
@@ -136,63 +144,70 @@ export default function RoomDetailPage() {
         </div>
       </div>
       
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Danh sách tài sản</h2>
-        <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-          <SheetTrigger asChild>
-            <Button size="sm">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Thêm tài sản
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Thêm tài sản vào "{room.name}"</SheetTitle>
-              <SheetDescription>
-                Nhập tên và số lượng tài sản cần thêm.
-              </SheetDescription>
-            </SheetHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-8">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tên tài sản</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ví dụ: Ghế xoay" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Số lượng</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <SheetFooter>
-                    <SheetClose asChild>
-                        <Button variant="outline">Hủy</Button>
-                    </SheetClose>
-                    <Button type="submit">Thêm</Button>
-                </SheetFooter>
-              </form>
-            </Form>
-          </SheetContent>
-        </Sheet>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold">Tài sản ({assets.length})</h2>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Xuất PDF
+          </Button>
+          <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Thêm
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Thêm tài sản vào "{room.name}"</SheetTitle>
+                <SheetDescription>
+                  Nhập tên và số lượng tài sản cần thêm.
+                </SheetDescription>
+              </SheetHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-8">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tên tài sản</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ví dụ: Ghế xoay" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Số lượng</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <SheetFooter>
+                      <SheetClose asChild>
+                          <Button variant="outline">Hủy</Button>
+                      </SheetClose>
+                      <Button type="submit">Thêm</Button>
+                  </SheetFooter>
+                </form>
+              </Form>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
-
-      <div className="rounded-lg border">
+      
+      {/* Desktop View */}
+      <div className="hidden md:block rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -239,6 +254,35 @@ export default function RoomDetailPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile View */}
+       <div className="md:hidden space-y-3">
+          {assets.length > 0 ? (
+              assets.map((asset) => (
+                <Link href={`/assets/${asset.id}`} key={asset.id}>
+                  <Card className="bg-background hover:bg-accent transition-colors">
+                      <CardContent className="pt-4 space-y-2 text-sm">
+                          <div className="flex justify-between items-start">
+                              <div>
+                                  <p className="font-semibold">{asset.name}</p>
+                                  <p className="text-xs text-muted-foreground">{asset.id}</p>
+                              </div>
+                              <StatusBadge status={asset.status} />
+                          </div>
+                          <div className="text-muted-foreground text-xs flex items-center gap-2 pt-1">
+                              <CalendarDays className="h-3 w-3" />
+                              <span>{asset.dateAdded}</span>
+                          </div>
+                      </CardContent>
+                  </Card>
+                </Link>
+              ))
+          ) : (
+              <div className="text-center text-sm text-muted-foreground py-10">
+                  Chưa có tài sản nào.
+              </div>
+          )}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, LayoutGrid } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
@@ -21,11 +21,6 @@ export function MainNav({ onLinkClick }: { onLinkClick?: () => void }) {
       href: '/rooms',
       label: 'Phòng',
       icon: <LayoutGrid className="h-5 w-5" />,
-    },
-    {
-      href: '/reports',
-      label: 'Báo cáo',
-      icon: <ClipboardList className="h-5 w-5" />,
     },
   ];
 
@@ -60,5 +55,3 @@ export function MainNav({ onLinkClick }: { onLinkClick?: () => void }) {
     </div>
   );
 }
-
-    
