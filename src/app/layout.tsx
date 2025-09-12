@@ -15,10 +15,27 @@ const fontSpaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
 });
 
+const APP_NAME = "AssetFlow";
+const APP_DEFAULT_TITLE = "AssetFlow";
+const APP_TITLE_TEMPLATE = "%s - AssetFlow";
+const APP_DESCRIPTION = "A simple PWA for asset management.";
+
 export const metadata: Metadata = {
-  title: 'AssetFlow',
-  description: 'A simple PWA for asset management.',
-  manifest: '/manifest.json',
+  applicationName: APP_NAME,
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: APP_TITLE_TEMPLATE,
+  },
+  description: APP_DESCRIPTION,
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_DEFAULT_TITLE,
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
