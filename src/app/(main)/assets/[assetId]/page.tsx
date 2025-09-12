@@ -11,8 +11,6 @@ import {
   Tag,
   Wrench,
   Move,
-  Sparkles,
-  Loader2,
   FilePenLine,
 } from 'lucide-react';
 import { z } from 'zod';
@@ -31,7 +29,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -41,24 +38,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { getSuggestedStatus } from '@/app/actions';
 import {
     Form,
     FormControl,
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
 } from '@/components/ui/form';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 const statusTranslations: Record<AssetStatus, string> = {
   'in-use': 'Đang sử dụng',
@@ -92,11 +80,6 @@ export default function AssetDetailPage() {
   const [asset, setAsset] = useState<Asset | undefined>(assetData);
   const { toast } = useToast();
 
-  const [aiSuggestion, setAiSuggestion] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [userInput, setUserInput] = useState('');
-
-
   if (!asset) {
     notFound();
   }
@@ -123,23 +106,6 @@ export default function AssetDetailPage() {
     const newRoom = getRoomById(values.roomId);
     setAsset(prev => prev ? {...prev, roomId: values.roomId} : undefined);
     toast({ title: 'Thành công', description: `Tài sản đã được chuyển đến ${newRoom?.name}.` });
-  };
-
-  const handleGetAiSuggestion = async () => {
-    setAiLoading(true);
-    setAiSuggestion('');
-    const result = await getSuggestedStatus({
-      assetId: asset.id,
-      currentStatus: asset.status,
-      statusHistory: asset.history.map(h => statusTranslations[h.status as AssetStatus]),
-      userInput: userInput,
-    });
-    setAiLoading(false);
-    if (result.success && result.data) {
-      setAiSuggestion(result.data.suggestedStatus);
-    } else {
-      toast({ variant: 'destructive', title: 'Lỗi', description: result.error });
-    }
   };
 
 
@@ -282,30 +248,6 @@ export default function AssetDetailPage() {
                                     <DialogFooter><Button type="submit">Xác nhận</Button></DialogFooter>
                                 </form>
                             </Form>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog>
-                        <DialogTrigger asChild><Button size="sm"><Sparkles className="mr-2 h-4 w-4" />Gợi ý trạng thái AI</Button></DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Gợi ý trạng thái AI</DialogTitle>
-                                <DialogDescription>Mô tả tình trạng hiện tại của tài sản để AI đưa ra gợi ý.</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                                <Textarea placeholder="Ví dụ: Màn hình bị nứt, không lên nguồn..." value={userInput} onChange={e => setUserInput(e.target.value)} />
-                                {aiSuggestion && (
-                                    <div className="rounded-md border bg-accent/50 p-3 text-sm">
-                                        <p className="font-medium">Gợi ý của AI: <span className="font-bold">{aiSuggestion}</span></p>
-                                    </div>
-                                )}
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={handleGetAiSuggestion} disabled={aiLoading}>
-                                    {aiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                    Lấy gợi ý
-                                </Button>
-                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </CardContent>
