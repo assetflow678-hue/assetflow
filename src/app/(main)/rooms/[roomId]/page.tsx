@@ -165,12 +165,12 @@ export default function RoomDetailPage() {
     const doc = new jsPDF();
     doc.text(`Mã QR cho Phòng: ${room.name}`, 14, 20);
 
-    const qrCodeSize = 50; // mm
+    const qrCodeSize = 30; // mm
     const labelHeight = 10; // mm for the text below QR
     const itemHeight = qrCodeSize + labelHeight;
     const margin = 10; // mm
-    const itemsPerRow = 3;
-    const itemsPerPage = 8;
+    const itemsPerRow = 5;
+    const itemsPerPage = 20;
     const colWidth = (doc.internal.pageSize.getWidth() - 2 * margin) / itemsPerRow;
     let x = margin;
     let y = 30; // Start y position
