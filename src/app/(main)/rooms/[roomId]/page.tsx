@@ -246,7 +246,7 @@ export default function RoomDetailPage() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="sm" className="w-9 p-0">
                       <Download className="h-4 w-4" />
                       <span className="sr-only">Xuất Báo Cáo</span>
                     </Button>
