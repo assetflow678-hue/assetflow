@@ -25,41 +25,38 @@ export default function ScanPage() {
       
       try {
         const url = new URL(decodedText);
-        if (url.protocol === 'https:' && url.hostname.endsWith('assetflow.app') && url.pathname.startsWith('/assets/')) {
+        // This handles full URLs like https://assetflow.app/assets/R101-CHAIR-0001
+        if (url.pathname.startsWith('/assets/')) {
             router.push(url.pathname);
             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
-        } else if (url.pathname.startsWith('/assets/')) {
-            // Handle development URLs or relative paths if needed
-             router.push(url.pathname);
-             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
         }
       } catch (error) {
-        // Fallback for non-URL QR codes that might just contain an asset ID
-        if (decodedText.includes('-')) {
+        // This is a fallback for non-URL QR codes that might just contain an asset ID like "R101-CHAIR-0001"
+        if (decodedText.includes('-') && !decodedText.includes(' ')) {
              router.push(`/assets/${decodedText}`);
              toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
-            toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không phải là một URL hợp lệ.' });
+            toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
         }
       }
     };
 
     const onScanFailure = (error: Html5QrcodeError) => {
-      // Ignore scan failures.
+      // Ignore scan failures as they happen continuously.
     };
     
     const startScanner = async () => {
       try {
         const devices = await Html5Qrcode.getCameras();
-        setHasPermission(true);
-
         if (devices && devices.length) {
+            setHasPermission(true);
             html5QrCode = new Html5Qrcode(QR_SCANNER_ELEMENT_ID, {
               formatsToSupport: [0], // 0 is QR_CODE
               verbose: false
             });
+            // Try to find the back camera first
             const cameraId = devices.find(d => d.label.toLowerCase().includes('back'))?.id || devices[0].id;
             
             html5QrCode.start(
@@ -81,8 +78,11 @@ export default function ScanPage() {
                 onScanFailure
             ).catch(err => {
                 console.error("Error starting QR scanner", err);
+                toast({ variant: "destructive", title: "Lỗi Camera", description: "Không thể khởi động camera để quét."})
                 setHasPermission(false);
             });
+        } else {
+             setHasPermission(false);
         }
       } catch (err) {
         console.error("Camera permission denied or no cameras found.", err);
@@ -93,8 +93,7 @@ export default function ScanPage() {
     // Check for permissions first, then start the scanner.
     Html5Qrcode.getCameras()
       .then(devices => {
-        if (devices && devices.length) {
-          setHasPermission(true);
+        if (devices && devices.length > 0) {
           startScanner();
         } else {
           setHasPermission(false);
@@ -108,7 +107,9 @@ export default function ScanPage() {
 
     return () => {
       if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().catch(error => {
+        html5QrCode.stop().then(() => {
+          // console.log("QR Code scanning stopped successfully.");
+        }).catch(error => {
           console.error("Failed to clear html5-qrcode-scanner.", error);
         });
       }
