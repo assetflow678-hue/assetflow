@@ -70,20 +70,20 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
     : 'secondary';
   
   const text =
-    status === 'in-use' ? 'Đang sử dụng'
-    : status === 'broken' ? 'Bị hỏng'
-    : status === 'repairing' ? 'Đang sửa'
-    : 'Đã loại bỏ';
+    status === 'in-use' ? 'In Use'
+    : status === 'broken' ? 'Broken'
+    : status === 'repairing' ? 'Repairing'
+    : 'Disposed';
 
   return <Badge variant={variant}>{text}</Badge>;
 }
 
 const getStatusText = (status: Asset['status']) => {
     switch (status) {
-        case 'in-use': return 'Dang su dung';
-        case 'broken': return 'Bi hong';
-        case 'repairing': return 'Dang sua';
-        case 'disposed': return 'Da loai bo';
+        case 'in-use': return 'In Use';
+        case 'broken': return 'Broken';
+        case 'repairing': return 'Repairing';
+        case 'disposed': return 'Disposed';
     }
 }
 
@@ -144,12 +144,12 @@ export default function RoomDetailPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    doc.text(`Bao cao tai san - Phong: ${room.name}`, 14, 20);
-    doc.text(`Ngay xuat: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Asset Report - Room: ${room.name}`, 14, 20);
+    doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 14, 28);
 
     (doc as any).autoTable({
         startY: 35,
-        head: [['Ma tai san', 'Ten tai san', 'Ngay them', 'Tinh trang']],
+        head: [['Asset ID', 'Asset Name', 'Date Added', 'Status']],
         body: assets.map(asset => [
             asset.id,
             asset.name,
@@ -159,7 +159,7 @@ export default function RoomDetailPage() {
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
     });
 
-    doc.save(`bao-cao-tai-san-${room.id}.pdf`);
+    doc.save(`asset-report-${room.id}.pdf`);
   };
 
   return (
@@ -182,7 +182,7 @@ export default function RoomDetailPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
-            Xuất PDF
+            Export PDF
           </Button>
           <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
