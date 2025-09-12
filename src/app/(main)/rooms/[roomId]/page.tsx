@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Download,
   CalendarDays,
+  QrCode,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -153,6 +154,68 @@ export default function RoomDetailPage() {
     doc.save(`asset-report-${room.id}.pdf`);
   };
 
+  const handleExportQRCodesPDF = async () => {
+    const doc = new jsPDF();
+    doc.text(`QR Codes for Room: ${room.name}`, 14, 20);
+
+    const qrCodeSize = 50; // mm
+    const labelHeight = 10; // mm for the text below QR
+    const itemHeight = qrCodeSize + labelHeight;
+    const margin = 10; // mm
+    const itemsPerRow = 3;
+    const itemsPerPage = 8;
+    const colWidth = (doc.internal.pageSize.getWidth() - 2 * margin) / itemsPerRow;
+    let x = margin;
+    let y = 30; // Start y position
+
+    for (let i = 0; i < assets.length; i++) {
+        const asset = assets[i];
+        
+        // Add new page if needed
+        if (i > 0 && i % itemsPerPage === 0) {
+            doc.addPage();
+            y = 30;
+        }
+
+        const rowIndex = i % itemsPerPage;
+        const colIndex = rowIndex % itemsPerRow;
+
+        x = margin + colIndex * colWidth + (colWidth - qrCodeSize) / 2;
+        y = 30 + Math.floor(rowIndex / itemsPerRow) * itemHeight;
+
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://assetflow.app/assets/${asset.id}`)}`;
+        
+        try {
+            const response = await fetch(qrUrl);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            
+            await new Promise<void>((resolve, reject) => {
+                reader.onload = () => {
+                    const base64 = reader.result as string;
+                    doc.addImage(base64, 'PNG', x, y, qrCodeSize, qrCodeSize);
+
+                    doc.setFontSize(8);
+                    doc.text(asset.id, x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
+
+                    resolve();
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+            
+        } catch (error) {
+            console.error("Error fetching or adding QR code image:", error);
+            // Draw a placeholder if QR fails
+            doc.rect(x, y, qrCodeSize, qrCodeSize, 'D');
+            doc.text('QR Error', x + qrCodeSize/2, y + qrCodeSize/2, { align: 'center' });
+        }
+    }
+
+    doc.save(`qr-codes-${room.id}.pdf`);
+    toast({ title: 'Đã tạo PDF', description: `Đang tải xuống file PDF chứa mã QR cho phòng ${room.name}` });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -170,10 +233,14 @@ export default function RoomDetailPage() {
       
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Tài sản ({assets.length})</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-end">
           <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
             Xuất PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportQRCodesPDF}>
+            <QrCode className="mr-2 h-4 w-4" />
+            Xuất QR (PDF)
           </Button>
           <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
