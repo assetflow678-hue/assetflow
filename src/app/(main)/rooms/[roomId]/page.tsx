@@ -258,12 +258,12 @@ export default function RoomDetailPage() {
       </div>
 
       {/* Mobile View */}
-       <div className="md:hidden space-y-3">
+       <div className="md:hidden space-y-2">
           {assets.length > 0 ? (
               assets.map((asset) => (
                 <Link href={`/assets/${asset.id}`} key={asset.id}>
                   <Card className="bg-background hover:bg-accent transition-colors">
-                      <CardContent className="pt-4 space-y-2 text-sm">
+                      <CardContent className="p-3 space-y-1.5 text-sm">
                           <div className="flex justify-between items-start">
                               <div>
                                   <p className="font-semibold">{asset.name}</p>
