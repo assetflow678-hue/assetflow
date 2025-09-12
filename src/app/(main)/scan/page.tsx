@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Html5QrcodeScanner, Html5QrcodeError, Html5QrcodeResult } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeError, Html5QrcodeResult } from 'html5-qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Camera, AlertCircle } from 'lucide-react';
@@ -13,28 +13,18 @@ const QR_SCANNER_ELEMENT_ID = 'qr-scanner';
 export default function ScanPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [scanResult, setScanResult] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      QR_SCANNER_ELEMENT_ID,
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        rememberLastUsedCamera: true,
-        supportedScanTypes: [],
-      },
-      false // verbose
-    );
+    let html5QrCode: Html5Qrcode | undefined;
 
-    function onScanSuccess(decodedText: string, result: Html5QrcodeResult) {
-      scanner.clear();
-      setScanResult(decodedText);
+    const onScanSuccess = (decodedText: string, result: Html5QrcodeResult) => {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(err => console.error("Failed to stop QR scanner", err));
+      }
       
       try {
         const url = new URL(decodedText);
-        // Assuming the URL is for an asset, e.g., https://assetflow.app/assets/some-id
         if (url.pathname.startsWith('/assets/')) {
             router.push(url.pathname);
             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
@@ -44,18 +34,33 @@ export default function ScanPage() {
       } catch (error) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không phải là một URL hợp lệ.' });
       }
-    }
+    };
 
-    function onScanFailure(error: Html5QrcodeError) {
-      // This is called frequently, so we don't want to show a toast here.
-    }
+    const onScanFailure = (error: Html5QrcodeError) => {
+      // Ignore scan failures.
+    };
     
     const startScanner = async () => {
         try {
-            await Html5QrcodeScanner.getCameras();
+            await navigator.mediaDevices.getUserMedia({ video: true });
             setHasPermission(true);
-            scanner.render(onScanSuccess, onScanFailure);
+
+            html5QrCode = new Html5Qrcode(QR_SCANNER_ELEMENT_ID);
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                },
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.error("Error starting QR scanner", err);
+                setHasPermission(false);
+            });
+
         } catch (err) {
+            console.error("Camera permission denied.", err);
             setHasPermission(false);
         }
     }
@@ -63,9 +68,8 @@ export default function ScanPage() {
     startScanner();
 
     return () => {
-      // cleanup function to stop the scanner
-      if (scanner && scanner.getState() === 2) { // 2 is SCANNING state
-        scanner.clear().catch(error => {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(error => {
           console.error("Failed to clear html5-qrcode-scanner.", error);
         });
       }
@@ -80,8 +84,8 @@ export default function ScanPage() {
         </div>
 
         <Card>
-            <CardContent className="p-4">
-                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden"/>
+            <CardContent className="p-0">
+                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-video"/>
             </CardContent>
         </Card>
 
@@ -97,5 +101,3 @@ export default function ScanPage() {
     </div>
   );
 }
-
-    
