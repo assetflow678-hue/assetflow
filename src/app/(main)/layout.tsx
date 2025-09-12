@@ -32,6 +32,26 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  React.useEffect(() => {
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    };
+
+    const handleGestureStart = (event: Event) => {
+      event.preventDefault();
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('gesturestart', handleGestureStart, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('gesturestart', handleGestureStart);
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
