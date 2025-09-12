@@ -39,7 +39,8 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-  SheetClose
+  SheetClose,
+  SheetTrigger,
 } from '@/components/ui/sheet';
 import {
   Form,
