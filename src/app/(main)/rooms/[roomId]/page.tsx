@@ -269,67 +269,58 @@ export default function RoomDetailPage() {
             </DropdownMenu>
           </TooltipProvider>
 
-          <TooltipProvider>
-            <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SheetTrigger asChild>
-                    <Button size="icon">
-                      <PlusCircle className="h-4 w-4" />
-                       <span className="sr-only">Thêm tài sản</span>
-                    </Button>
-                  </SheetTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Thêm tài sản</p>
-                </TooltipContent>
-              </Tooltip>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Thêm tài sản vào "{room.name}"</SheetTitle>
-                  <SheetDescription>
-                    Nhập tên và số lượng tài sản cần thêm.
-                  </SheetDescription>
-                </SheetHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-8">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tên tài sản</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ví dụ: Ghế xoay" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Số lượng</FormLabel>
-                          <FormControl>
-                            <Input type="number" min="1" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <SheetFooter>
-                        <SheetClose asChild>
-                            <Button variant="outline">Hủy</Button>
-                        </SheetClose>
-                        <Button type="submit">Thêm</Button>
-                    </SheetFooter>
-                  </form>
-                </Form>
-              </SheetContent>
-            </Sheet>
-          </TooltipProvider>
+          <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Thêm tài sản
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Thêm tài sản vào "{room.name}"</SheetTitle>
+                <SheetDescription>
+                  Nhập tên và số lượng tài sản cần thêm.
+                </SheetDescription>
+              </SheetHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-8">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tên tài sản</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ví dụ: Ghế xoay" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Số lượng</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <SheetFooter>
+                      <SheetClose asChild>
+                          <Button variant="outline">Hủy</Button>
+                      </SheetClose>
+                      <Button type="submit">Thêm</Button>
+                  </SheetFooter>
+                </form>
+              </Form>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
       
