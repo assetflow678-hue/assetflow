@@ -159,7 +159,7 @@ export default function AssetDetailPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 h-full">
           <CardHeader>
             <CardTitle className="text-base">Chi tiết</CardTitle>
           </CardHeader>
@@ -197,7 +197,7 @@ export default function AssetDetailPage() {
         </Card>
         
         <div className="space-y-6">
-            <Card>
+            <Card className="h-full">
                 <CardHeader>
                     <CardTitle className="text-base">Mã QR</CardTitle>
                     <CardDescription>Quét để xem hoặc in nhãn.</CardDescription>
