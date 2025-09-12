@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
 import { MobileNav } from '@/components/mobile-nav';
 
@@ -19,17 +20,16 @@ export default function MainLayout({
       </aside>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-          <div className="md:hidden">
+          <Link href="/" className="md:hidden">
+            <Logo />
+          </Link>
+          <div className="hidden md:flex h-14 items-center px-4 lg:h-[60px] lg:px-6 -ml-6">
             <Link href="/">
               <Logo />
             </Link>
           </div>
-          <div className="hidden md:flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/">
-              <Logo />
-            </Link>
-          </div>
-          <div className="w-full flex-1">
+          <div className="w-full flex-1" />
+          <div className="hidden md:block w-full flex-1">
             <form>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -40,6 +40,12 @@ export default function MainLayout({
                 />
               </div>
             </form>
+          </div>
+          <div className="md:hidden">
+            <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Tìm kiếm</span>
+            </Button>
           </div>
         </header>
         <main className="flex-1 p-4 pb-20 md:p-6 md:pb-6">{children}</main>
