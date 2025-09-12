@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, QrCode } from 'lucide-react';
+import { Home, QrCode } from 'lucide-react';
+import { memo } from 'react';
 
 import { cn } from '@/lib/utils';
-import { Button } from './button';
-import { Home } from 'lucide-react';
 
-export function MobileNav() {
+const MobileNavComponent = () => {
   const pathname = usePathname();
 
   const navLinks = [
@@ -47,3 +46,5 @@ export function MobileNav() {
     </nav>
   );
 }
+
+export const MobileNav = memo(MobileNavComponent);

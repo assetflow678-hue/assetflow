@@ -1,7 +1,8 @@
 import { Replace } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { memo } from 'react';
 
-export function Logo({ className }: { className?: string }) {
+const LogoComponent = ({ className }: { className?: string }) => {
   return (
     <div
       className={cn(
@@ -16,3 +17,5 @@ export function Logo({ className }: { className?: string }) {
     </div>
   );
 }
+
+export const Logo = memo(LogoComponent);

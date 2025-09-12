@@ -9,6 +9,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   workboxOptions: {
     disableDevLogs: true,
   },
+  strict: true,
 });
 
 const nextConfig = {
@@ -49,5 +50,3 @@ const nextConfig = {
 };
 
 module.exports = withPWA(nextConfig);
-
-    

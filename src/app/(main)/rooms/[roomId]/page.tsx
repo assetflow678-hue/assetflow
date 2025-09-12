@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -89,10 +89,10 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
 
 export default function RoomDetailPage() {
   const params = useParams<{ roomId: string }>();
-  const roomData = getRoomById(params.roomId);
+  const roomData = useMemo(() => getRoomById(params.roomId), [params.roomId]);
 
   const [room] = useState<Room | undefined>(roomData);
-  const [assets, setAssets] = useState<Asset[]>(getAssetsByRoomId(params.roomId));
+  const [assets, setAssets] = useState<Asset[]>(() => getAssetsByRoomId(params.roomId));
   const [isSheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
 
@@ -172,55 +172,49 @@ export default function RoomDetailPage() {
     const itemsPerRow = 6;
     const itemsPerPage = 24;
     const colWidth = (doc.internal.pageSize.getWidth() - 2 * margin) / itemsPerRow;
-    let x = margin;
-    let y = 30; // Start y position
+    
+    toast({ title: 'Đang tạo PDF...', description: 'Quá trình này có thể mất một lúc.' });
 
-    for (let i = 0; i < assets.length; i++) {
-        const asset = assets[i];
-        
-        // Add new page if needed
-        if (i > 0 && i % itemsPerPage === 0) {
-            doc.addPage();
-            y = 30;
-        }
-
-        const rowIndex = i % itemsPerPage;
-        const colIndex = rowIndex % itemsPerRow;
-
-        x = margin + colIndex * colWidth + (colWidth - qrCodeSize) / 2;
-        y = 30 + Math.floor(rowIndex / itemsPerRow) * itemHeight;
-
+    const qrCodePromises = assets.map(asset => {
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://assetflow.app/assets/${asset.id}`)}`;
-        
-        try {
-            const response = await fetch(qrUrl);
-            const blob = await response.blob();
-            const reader = new FileReader();
-            
-            await new Promise<void>((resolve, reject) => {
-                reader.onload = () => {
-                    const base64 = reader.result as string;
-                    doc.addImage(base64, 'PNG', x, y, qrCodeSize, qrCodeSize);
-
-                    doc.setFontSize(8);
-                    doc.text(asset.id, x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
-
-                    resolve();
-                };
+        return fetch(qrUrl)
+            .then(response => response.blob())
+            .then(blob => new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
-            });
-            
-        } catch (error) {
-            console.error("Error fetching or adding QR code image:", error);
-            // Draw a placeholder if QR fails
-            doc.rect(x, y, qrCodeSize, qrCodeSize, 'D');
-            doc.text('QR Error', x + qrCodeSize/2, y + qrCodeSize/2, { align: 'center' });
-        }
-    }
+            }));
+    });
 
-    doc.save(`ma-qr-${room.id}.pdf`);
-    toast({ title: 'Đã tạo PDF', description: `Đang tải xuống file PDF chứa mã QR cho phòng ${room.name}` });
+    try {
+        const qrCodeBase64s = await Promise.all(qrCodePromises);
+
+        qrCodeBase64s.forEach((base64, i) => {
+            const asset = assets[i];
+            
+            if (i > 0 && i % itemsPerPage === 0) {
+                doc.addPage();
+                doc.text(`Mã QR cho Phòng: ${room.name} (Trang ${Math.floor(i / itemsPerPage) + 1})`, 14, 20);
+            }
+
+            const rowIndex = i % itemsPerPage;
+            const colIndex = rowIndex % itemsPerRow;
+
+            const x = margin + colIndex * colWidth + (colWidth - qrCodeSize) / 2;
+            const y = 30 + Math.floor(rowIndex / itemsPerRow) * itemHeight;
+
+            doc.addImage(base64, 'PNG', x, y, qrCodeSize, qrCodeSize);
+            doc.setFontSize(8);
+            doc.text(asset.id, x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
+        });
+
+        doc.save(`ma-qr-${room.id}.pdf`);
+        toast({ title: 'Đã tạo PDF thành công!', description: `Đang tải xuống file PDF cho phòng ${room.name}` });
+    } catch (error) {
+        console.error("Error generating QR codes PDF:", error);
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể tạo file PDF mã QR.' });
+    }
   }
 
   return (

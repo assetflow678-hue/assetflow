@@ -23,7 +23,7 @@ import {
 import { Button } from './ui/button';
 import { User, Warehouse, Trash2, FilePenLine } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState, type TouchEvent } from 'react';
+import { useRef, useState, type TouchEvent, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 const SWIPE_THRESHOLD_OPEN = 80; // px to swipe right to reveal actions
@@ -42,6 +42,8 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
   const startDragX = useRef(0); // The value of dragX when the drag started
+
+  const assetCount = useMemo(() => getAssetsByRoomId(room.id).length, [room.id]);
 
   const handleDragStart = (e: TouchEvent<HTMLDivElement>) => {
     setIsDragging(true);
@@ -71,7 +73,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
        setDragX(0); // Snap closed if swiped left enough
     }
     else {
-      setDragX(startDragX.current); // Snap back to where it was
+      setDragX(0); // Snap back to closed position
     }
     dragStartX.current = 0;
   };
@@ -121,7 +123,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
         >
             <Link href={`/rooms/${room.id}`} draggable="false" onClickCapture={(e) => {
                 // Prevent navigation if card was swiped or is open
-                if (dragX !== 0 || startDragX.current !== 0) {
+                if (dragX !== 0 || Math.abs(startDragX.current - dragX) > 5) {
                     e.preventDefault();
                     closeActions();
                 }
@@ -144,7 +146,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
                         <div className="text-xs text-muted-foreground">
                         Số lượng tài sản:{' '}
                         <span className="font-bold text-foreground">
-                            {getAssetsByRoomId(room.id).length}
+                            {assetCount}
                         </span>
                         </div>
                     </CardContent>
