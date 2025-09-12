@@ -144,9 +144,6 @@ export default function RoomDetailPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    // The default fonts in jsPDF don't support Vietnamese characters well.
-    // For proper display, we would need to embed a font that supports them.
-    // For now, we will use default fonts and some text might not render correctly.
     doc.text(`Bao cao tai san - Phong: ${room.name}`, 14, 20);
     doc.text(`Ngay xuat: ${new Date().toLocaleDateString()}`, 14, 28);
 
