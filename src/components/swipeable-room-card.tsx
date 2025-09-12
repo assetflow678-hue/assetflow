@@ -89,8 +89,9 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
         <div className="absolute top-0 left-0 flex h-full items-center">
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                     <Button variant="ghost" className="h-full w-[80px] rounded-none bg-destructive/20 text-destructive hover:bg-destructive/30">
+                     <Button variant="ghost" className="h-full w-[80px] rounded-none bg-destructive/20 text-destructive hover:bg-destructive/30 flex-col gap-1.5">
                         <Trash2 className="h-5 w-5" />
+                        <span className="text-xs font-semibold">Xóa</span>
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -107,8 +108,9 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
+            <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 flex-col gap-1.5" onClick={onEdit}>
                 <FilePenLine className="h-5 w-5" />
+                <span className="text-xs font-semibold">Sửa</span>
             </Button>
         </div>
       
