@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import {
   ArrowLeft,
   CalendarDays,
@@ -75,7 +75,8 @@ const roomMoveSchema = z.object({
     roomId: z.string(),
 });
 
-export default function AssetDetailPage({ params }: { params: { assetId: string } }) {
+export default function AssetDetailPage() {
+  const params = useParams<{ assetId: string }>();
   const assetData = getAssetById(params.assetId);
 
   const [asset, setAsset] = useState<Asset | undefined>(assetData);
@@ -216,7 +217,9 @@ export default function AssetDetailPage({ params }: { params: { assetId: string 
                             <Button variant="outline"><Wrench className="mr-2 h-4 w-4" />Cập nhật tình trạng</Button>
                         </DialogTrigger>
                         <DialogContent>
-                            <DialogHeader><DialogTitle>Cập nhật tình trạng</DialogTitle></DialogHeader>
+                            <DialogHeader>
+                              <DialogTitle>Cập nhật tình trạng</DialogTitle>
+                            </DialogHeader>
                             <Form {...statusUpdateForm}>
                                 <form onSubmit={statusUpdateForm.handleSubmit(onStatusUpdate)} className="space-y-4">
                                 <FormField
@@ -247,7 +250,9 @@ export default function AssetDetailPage({ params }: { params: { assetId: string 
                             <Button variant="outline"><Move className="mr-2 h-4 w-4" />Chuyển phòng</Button>
                         </DialogTrigger>
                         <DialogContent>
-                            <DialogHeader><DialogTitle>Chuyển phòng</DialogTitle></DialogHeader>
+                            <DialogHeader>
+                              <DialogTitle>Chuyển phòng</DialogTitle>
+                            </DialogHeader>
                             <Form {...roomMoveForm}>
                                 <form onSubmit={roomMoveForm.handleSubmit(onRoomMove)} className="space-y-4">
                                     <FormField

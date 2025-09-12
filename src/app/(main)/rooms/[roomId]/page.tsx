@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import {
   PlusCircle,
   MoreHorizontal,
@@ -36,7 +36,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetDescription,
   SheetFooter,
   SheetClose
@@ -74,7 +73,8 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
 }
 
 
-export default function RoomDetailPage({ params }: { params: { roomId: string } }) {
+export default function RoomDetailPage() {
+  const params = useParams<{ roomId: string }>();
   const roomData = getRoomById(params.roomId);
 
   const [room] = useState<Room | undefined>(roomData);
