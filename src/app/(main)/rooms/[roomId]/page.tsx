@@ -13,6 +13,7 @@ import {
   Download,
   CalendarDays,
   QrCode,
+  FilePenLine,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -57,6 +58,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const addAssetSchema = z.object({
   name: z.string().min(2, { message: 'Tên tài sản phải có ít nhất 2 ký tự' }),
@@ -136,12 +143,12 @@ export default function RoomDetailPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    doc.text(`Asset Report - Room: ${room.name}`, 14, 20);
-    doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Báo cáo tài sản - Phòng: ${room.name}`, 14, 20);
+    doc.text(`Ngày xuất: ${new Date().toLocaleDateString()}`, 14, 28);
 
     (doc as any).autoTable({
         startY: 35,
-        head: [['Asset ID', 'Asset Name', 'Date Added', 'Status']],
+        head: [['Mã tài sản', 'Tên tài sản', 'Ngày thêm', 'Tình trạng']],
         body: assets.map(asset => [
             asset.id,
             asset.name,
@@ -151,12 +158,12 @@ export default function RoomDetailPage() {
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
     });
 
-    doc.save(`asset-report-${room.id}.pdf`);
+    doc.save(`baocao-taisan-${room.id}.pdf`);
   };
 
   const handleExportQRCodesPDF = async () => {
     const doc = new jsPDF();
-    doc.text(`QR Codes for Room: ${room.name}`, 14, 20);
+    doc.text(`Mã QR cho Phòng: ${room.name}`, 14, 20);
 
     const qrCodeSize = 50; // mm
     const labelHeight = 10; // mm for the text below QR
@@ -212,7 +219,7 @@ export default function RoomDetailPage() {
         }
     }
 
-    doc.save(`qr-codes-${room.id}.pdf`);
+    doc.save(`ma-qr-${room.id}.pdf`);
     toast({ title: 'Đã tạo PDF', description: `Đang tải xuống file PDF chứa mã QR cho phòng ${room.name}` });
   }
 
@@ -234,77 +241,95 @@ export default function RoomDetailPage() {
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Tài sản ({assets.length})</h2>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="px-2">
-                <Download className="mr-2 h-4 w-4" />
-                Xuất Báo Cáo
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <Download className="mr-2 h-4 w-4" />
-                Danh sách tài sản (PDF)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportQRCodesPDF}>
-                <QrCode className="mr-2 h-4 w-4" />
-                Mã QR tài sản (PDF)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <TooltipProvider>
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Download className="h-4 w-4" />
+                      <span className="sr-only">Xuất Báo Cáo</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Xuất Báo Cáo</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Danh sách tài sản (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportQRCodesPDF}>
+                  <QrCode className="mr-2 h-4 w-4" />
+                  Mã QR tài sản (PDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TooltipProvider>
 
-          <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button size="sm" className="px-2">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Thêm
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Thêm tài sản vào "{room.name}"</SheetTitle>
-                <SheetDescription>
-                  Nhập tên và số lượng tài sản cần thêm.
-                </SheetDescription>
-              </SheetHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-8">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tên tài sản</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ví dụ: Ghế xoay" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Số lượng</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="1" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <SheetFooter>
-                      <SheetClose asChild>
-                          <Button variant="outline">Hủy</Button>
-                      </SheetClose>
-                      <Button type="submit">Thêm</Button>
-                  </SheetFooter>
-                </form>
-              </Form>
-            </SheetContent>
-          </Sheet>
+          <TooltipProvider>
+            <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SheetTrigger asChild>
+                    <Button size="icon">
+                      <PlusCircle className="h-4 w-4" />
+                       <span className="sr-only">Thêm tài sản</span>
+                    </Button>
+                  </SheetTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thêm tài sản</p>
+                </TooltipContent>
+              </Tooltip>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Thêm tài sản vào "{room.name}"</SheetTitle>
+                  <SheetDescription>
+                    Nhập tên và số lượng tài sản cần thêm.
+                  </SheetDescription>
+                </SheetHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-8">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tên tài sản</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ví dụ: Ghế xoay" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Số lượng</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <SheetFooter>
+                        <SheetClose asChild>
+                            <Button variant="outline">Hủy</Button>
+                        </SheetClose>
+                        <Button type="submit">Thêm</Button>
+                    </SheetFooter>
+                  </form>
+                </Form>
+              </SheetContent>
+            </Sheet>
+          </TooltipProvider>
         </div>
       </div>
       

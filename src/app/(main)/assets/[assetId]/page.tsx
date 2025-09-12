@@ -12,7 +12,8 @@ import {
   Wrench,
   Move,
   Sparkles,
-  Loader2
+  Loader2,
+  FilePenLine,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -52,6 +53,12 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const statusTranslations: Record<AssetStatus, string> = {
   'in-use': 'Đang sử dụng',
@@ -173,7 +180,7 @@ export default function AssetDetailPage() {
               <span>{asset.dateAdded}</span>
             </div>
             <div className="flex items-center gap-4">
-              <Wrench className="h-5 w-5 text-muted-foreground" />
+              <FilePenLine className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">Trạng thái:</span>
               <StatusBadge status={asset.status} />
             </div>
