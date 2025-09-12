@@ -19,7 +19,7 @@ export default function ScanPage() {
     let html5QrCode: Html5Qrcode | undefined;
 
     const onScanSuccess = (decodedText: string, result: Html5QrcodeResult) => {
-      if (html5QrCode) {
+      if (html5QrCode?.isScanning) {
         html5QrCode.stop().catch(err => console.error("Failed to stop QR scanner", err));
       }
       
@@ -41,13 +41,16 @@ export default function ScanPage() {
     };
     
     const startScanner = async () => {
-        try {
-            await navigator.mediaDevices.getUserMedia({ video: true });
-            setHasPermission(true);
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        setHasPermission(true);
 
+        if (devices && devices.length) {
             html5QrCode = new Html5Qrcode(QR_SCANNER_ELEMENT_ID);
+            const cameraId = devices.find(d => d.label.toLowerCase().includes('back'))?.id || devices[0].id;
+            
             html5QrCode.start(
-                { facingMode: "environment" },
+                cameraId,
                 {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
@@ -58,23 +61,34 @@ export default function ScanPage() {
                 console.error("Error starting QR scanner", err);
                 setHasPermission(false);
             });
-
-        } catch (err) {
-            console.error("Camera permission denied.", err);
-            setHasPermission(false);
         }
+      } catch (err) {
+        console.error("Camera permission denied or no cameras found.", err);
+        setHasPermission(false);
+      }
     }
 
-    startScanner();
+    // Request permission first, then start scanner
+    if (hasPermission === null) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(() => {
+                startScanner();
+            })
+            .catch(err => {
+                console.error("Camera permission denied.", err);
+                setHasPermission(false);
+            });
+    }
+
 
     return () => {
-      if (html5QrCode) {
+      if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().catch(error => {
           console.error("Failed to clear html5-qrcode-scanner.", error);
         });
       }
     };
-  }, [router, toast]);
+  }, [router, toast, hasPermission]);
 
   return (
     <div className="space-y-6">
