@@ -80,10 +80,10 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
 
 const getStatusText = (status: Asset['status']) => {
     switch (status) {
-        case 'in-use': return 'Đang sử dụng';
-        case 'broken': return 'Bị hỏng';
-        case 'repairing': return 'Đang sửa';
-        case 'disposed': return 'Đã loại bỏ';
+        case 'in-use': return 'Dang su dung';
+        case 'broken': return 'Bi hong';
+        case 'repairing': return 'Dang sua';
+        case 'disposed': return 'Da loai bo';
     }
 }
 
@@ -144,13 +144,9 @@ export default function RoomDetailPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    // We need to tell jsPDF to use a font that supports Vietnamese characters
-    // The default fonts do not. We'll need to load a font like 'Roboto'
-    // For now, let's proceed and the text might not render correctly.
-    // In a real app, we would embed a font file.
-    doc.addFont('/fonts/Roboto-Regular.ttf', 'Roboto', 'normal');
-    doc.setFont('Roboto');
-
+    // The default fonts in jsPDF don't support Vietnamese characters well.
+    // For proper display, we would need to embed a font that supports them.
+    // For now, we will use default fonts and some text might not render correctly.
     doc.text(`Bao cao tai san - Phong: ${room.name}`, 14, 20);
     doc.text(`Ngay xuat: ${new Date().toLocaleDateString()}`, 14, 28);
 
@@ -164,7 +160,6 @@ export default function RoomDetailPage() {
             getStatusText(asset.status)
         ]),
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
-        styles: { font: 'Roboto' }
     });
 
     doc.save(`bao-cao-tai-san-${room.id}.pdf`);
