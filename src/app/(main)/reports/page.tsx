@@ -9,9 +9,16 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, CalendarDays, Tag, Wrench, CircleUser } from 'lucide-react';
+import { Download, CalendarDays } from 'lucide-react';
 import type { Asset } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 function StatusBadge({ status }: { status: Asset['status'] }) {
     const variant: "default" | "secondary" | "destructive" | "outline" =
@@ -47,70 +54,74 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="space-y-8">
+      <Accordion type="single" collapsible className="w-full space-y-4">
         {assetsByRoom.map(roomData => (
-            <div key={roomData.id}>
-                <h2 className="text-lg font-semibold mb-2">{roomData.name} ({roomData.assets.length} tài sản)</h2>
-                {/* Desktop View */}
-                <div className="hidden md:block rounded-lg border">
-                    <Table>
-                        <TableHeader>
-                        <TableRow>
-                            <TableHead>Mã tài sản</TableHead>
-                            <TableHead>Tên tài sản</TableHead>
-                            <TableHead>Ngày thêm</TableHead>
-                            <TableHead>Tình trạng</TableHead>
-                        </TableRow>
-                        </TableHeader>
-                        <TableBody>
+            <AccordionItem value={roomData.id} key={roomData.id} className="border-b-0 rounded-lg bg-card">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline rounded-lg">
+                    <h2 className="text-md font-semibold">{roomData.name} ({roomData.assets.length} tài sản)</h2>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                    {/* Desktop View */}
+                    <div className="hidden md:block rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Mã tài sản</TableHead>
+                                <TableHead>Tên tài sản</TableHead>
+                                <TableHead>Ngày thêm</TableHead>
+                                <TableHead>Tình trạng</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {roomData.assets.length > 0 ? (
+                                roomData.assets.map((asset) => (
+                                <TableRow key={asset.id}>
+                                    <TableCell className="font-medium text-sm">{asset.id}</TableCell>
+                                    <TableCell className="text-sm">{asset.name}</TableCell>
+                                    <TableCell className="text-sm">{asset.dateAdded}</TableCell>
+                                    <TableCell><StatusBadge status={asset.status} /></TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center">
+                                    Phòng này không có tài sản.
+                                </TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    {/* Mobile View */}
+                    <div className="md:hidden space-y-3">
                         {roomData.assets.length > 0 ? (
                             roomData.assets.map((asset) => (
-                            <TableRow key={asset.id}>
-                                <TableCell className="font-medium text-sm">{asset.id}</TableCell>
-                                <TableCell className="text-sm">{asset.name}</TableCell>
-                                <TableCell className="text-sm">{asset.dateAdded}</TableCell>
-                                <TableCell><StatusBadge status={asset.status} /></TableCell>
-                            </TableRow>
+                                <Card key={asset.id} className="bg-background">
+                                    <CardContent className="pt-4 space-y-2 text-sm">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold">{asset.name}</p>
+                                                <p className="text-xs text-muted-foreground">{asset.id}</p>
+                                            </div>
+                                            <StatusBadge status={asset.status} />
+                                        </div>
+                                        <div className="text-muted-foreground text-xs flex items-center gap-2 pt-1">
+                                            <CalendarDays className="h-3 w-3" />
+                                            <span>{asset.dateAdded}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             ))
                         ) : (
-                            <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">
+                            <div className="text-center text-sm text-muted-foreground py-10">
                                 Phòng này không có tài sản.
-                            </TableCell>
-                            </TableRow>
+                            </div>
                         )}
-                        </TableBody>
-                    </Table>
-                </div>
-                {/* Mobile View */}
-                <div className="md:hidden space-y-3">
-                    {roomData.assets.length > 0 ? (
-                        roomData.assets.map((asset) => (
-                            <Card key={asset.id}>
-                                <CardContent className="pt-4 space-y-2 text-sm">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-semibold">{asset.name}</p>
-                                            <p className="text-xs text-muted-foreground">{asset.id}</p>
-                                        </div>
-                                        <StatusBadge status={asset.status} />
-                                    </div>
-                                    <div className="text-muted-foreground text-xs flex items-center gap-2 pt-1">
-                                        <CalendarDays className="h-3 w-3" />
-                                        <span>{asset.dateAdded}</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
-                    ) : (
-                        <div className="text-center text-sm text-muted-foreground py-10">
-                            Phòng này không có tài sản.
-                        </div>
-                    )}
-                </div>
-            </div>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
         ))}
-      </div>
+      </Accordion>
     </div>
   );
 }
