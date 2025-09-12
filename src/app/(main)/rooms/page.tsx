@@ -1,19 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PlusCircle, User, Warehouse } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Sheet,
   SheetContent,
@@ -22,7 +15,7 @@ import {
   SheetTrigger,
   SheetDescription,
   SheetFooter,
-  SheetClose
+  SheetClose,
 } from '@/components/ui/sheet';
 import {
   Form,
@@ -34,10 +27,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { initialRooms, getAssetsByRoomId } from '@/lib/mock-data';
+import { initialRooms } from '@/lib/mock-data';
 import type { Room } from '@/lib/types';
+import { SwipeableRoomCard } from '@/components/swipeable-room-card';
 
-const addRoomSchema = z.object({
+const roomSchema = z.object({
   name: z.string().min(3, { message: 'Tên phòng phải có ít nhất 3 ký tự' }),
   manager: z.string().min(3, { message: 'Tên người quản lý phải có ít nhất 3 ký tự' }),
 });
@@ -45,46 +39,86 @@ const addRoomSchema = z.object({
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
   const [isSheetOpen, setSheetOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof addRoomSchema>>({
-    resolver: zodResolver(addRoomSchema),
+  const form = useForm<z.infer<typeof roomSchema>>({
+    resolver: zodResolver(roomSchema),
     defaultValues: {
       name: '',
       manager: '',
     },
   });
 
-  function onSubmit(values: z.infer<typeof addRoomSchema>) {
-    const newRoom: Room = {
-      id: `R${Math.floor(100 + Math.random() * 900)}`,
-      ...values,
-    };
-    setRooms((prev) => [newRoom, ...prev]);
+  const handleAddNew = () => {
+    setEditingRoom(null);
+    form.reset({ name: '', manager: '' });
+    setSheetOpen(true);
+  };
+  
+  const handleEdit = (room: Room) => {
+    setEditingRoom(room);
+    form.reset(room);
+    setSheetOpen(true);
+  };
+
+  const handleDelete = (roomId: string) => {
+    setRooms((prev) => prev.filter((r) => r.id !== roomId));
     toast({
-      title: 'Thành công!',
-      description: `Phòng "${values.name}" đã được thêm.`,
+        variant: 'destructive',
+        title: 'Đã xóa!',
+        description: `Phòng đã được xóa khỏi hệ thống.`,
     });
+  };
+
+  function onSubmit(values: z.infer<typeof roomSchema>) {
+    if (editingRoom) {
+      // Update existing room
+      setRooms(prev => prev.map(r => r.id === editingRoom.id ? {...r, ...values} : r));
+      toast({
+        title: 'Thành công!',
+        description: `Thông tin phòng "${values.name}" đã được cập nhật.`,
+      });
+    } else {
+      // Add new room
+      const newRoom: Room = {
+        id: `R${Math.floor(100 + Math.random() * 900)}`,
+        ...values,
+      };
+      setRooms((prev) => [newRoom, ...prev]);
+      toast({
+        title: 'Thành công!',
+        description: `Phòng "${values.name}" đã được thêm.`,
+      });
+    }
+
     form.reset();
     setSheetOpen(false);
+    setEditingRoom(null);
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold font-headline">Danh sách phòng</h1>
-        <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(isOpen) => {
+            setSheetOpen(isOpen);
+            if (!isOpen) setEditingRoom(null);
+        }}>
           <SheetTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" onClick={handleAddNew}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Thêm phòng
             </Button>
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
-              <SheetTitle>Thêm phòng mới</SheetTitle>
+              <SheetTitle>{editingRoom ? 'Chỉnh sửa phòng' : 'Thêm phòng mới'}</SheetTitle>
               <SheetDescription>
-                Nhập thông tin chi tiết để thêm một phòng mới vào hệ thống.
+                {editingRoom
+                    ? 'Cập nhật thông tin chi tiết của phòng.'
+                    : 'Nhập thông tin chi tiết để thêm một phòng mới vào hệ thống.'
+                }
               </SheetDescription>
             </SheetHeader>
             <Form {...form}>
@@ -119,7 +153,7 @@ export default function RoomsPage() {
                     <SheetClose asChild>
                         <Button variant="outline">Hủy</Button>
                     </SheetClose>
-                    <Button type="submit">Thêm phòng</Button>
+                    <Button type="submit">{editingRoom ? 'Lưu thay đổi' : 'Thêm phòng'}</Button>
                 </SheetFooter>
               </form>
             </Form>
@@ -128,28 +162,12 @@ export default function RoomsPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => (
-          <Link href={`/rooms/${room.id}`} key={room.id}>
-            <Card className="h-full hover:bg-accent transition-colors">
-              <CardHeader className="p-4 pb-2">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Warehouse className="h-5 w-5 text-primary" />
-                  {room.name}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-2 pt-1 text-xs">
-                  <User className="h-4 w-4" />
-                  {room.manager}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="text-xs text-muted-foreground">
-                  Số lượng tài sản:{' '}
-                  <span className="font-bold text-foreground">
-                    {getAssetsByRoomId(room.id).length}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+           <SwipeableRoomCard 
+             key={room.id}
+             room={room}
+             onEdit={() => handleEdit(room)}
+             onDelete={() => handleDelete(room.id)}
+           />
         ))}
       </div>
     </div>
