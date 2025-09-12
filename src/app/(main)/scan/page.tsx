@@ -25,14 +25,24 @@ export default function ScanPage() {
       
       try {
         const url = new URL(decodedText);
-        if (url.pathname.startsWith('/assets/')) {
+        if (url.protocol === 'https:' && url.hostname.endsWith('assetflow.app') && url.pathname.startsWith('/assets/')) {
             router.push(url.pathname);
             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
+        } else if (url.pathname.startsWith('/assets/')) {
+            // Handle development URLs or relative paths if needed
+             router.push(url.pathname);
+             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
         }
       } catch (error) {
-        toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không phải là một URL hợp lệ.' });
+        // Fallback for non-URL QR codes that might just contain an asset ID
+        if (decodedText.includes('-')) {
+             router.push(`/assets/${decodedText}`);
+             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
+        } else {
+            toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không phải là một URL hợp lệ.' });
+        }
       }
     };
 
@@ -58,7 +68,8 @@ export default function ScanPage() {
                     fps: 10,
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
                       const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                      const qrboxSize = Math.floor(minEdge * 0.7);
+                      // Set a minimum size and a percentage of the viewfinder
+                      const qrboxSize = Math.max(200, Math.floor(minEdge * 0.7));
                       return {
                         width: qrboxSize,
                         height: qrboxSize,
@@ -79,16 +90,20 @@ export default function ScanPage() {
       }
     }
 
-    if (hasPermission === null) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(() => {
-                startScanner();
-            })
-            .catch(err => {
-                console.error("Camera permission denied.", err);
-                setHasPermission(false);
-            });
-    }
+    // Check for permissions first, then start the scanner.
+    Html5Qrcode.getCameras()
+      .then(devices => {
+        if (devices && devices.length) {
+          setHasPermission(true);
+          startScanner();
+        } else {
+          setHasPermission(false);
+        }
+      })
+      .catch(err => {
+        setHasPermission(false);
+        console.error("Error getting cameras:", err);
+      });
 
 
     return () => {
@@ -98,7 +113,7 @@ export default function ScanPage() {
         });
       }
     };
-  }, [router, toast, hasPermission]);
+  }, [router, toast]);
 
   return (
     <div className="space-y-6">
@@ -109,7 +124,7 @@ export default function ScanPage() {
 
         <Card>
             <CardContent className="p-0">
-                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square"/>
+                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square bg-muted"/>
             </CardContent>
         </Card>
 
