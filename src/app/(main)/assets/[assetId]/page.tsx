@@ -197,7 +197,7 @@ export default function AssetDetailPage() {
         </Card>
         
         <div className="space-y-6">
-            <Card className="h-full">
+            <Card>
                 <CardHeader>
                     <CardTitle className="text-base">Mã QR</CardTitle>
                     <CardDescription>Quét để xem hoặc in nhãn.</CardDescription>
