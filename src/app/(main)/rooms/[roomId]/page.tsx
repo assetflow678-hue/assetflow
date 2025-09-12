@@ -11,7 +11,10 @@ import {
   MoreHorizontal,
   ArrowLeft,
   Download,
+  CalendarDays,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 import { getRoomById, getAssetsByRoomId } from '@/lib/mock-data';
 import type { Asset, Room } from '@/lib/types';
@@ -53,7 +56,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { CalendarDays } from 'lucide-react';
 
 const addAssetSchema = z.object({
   name: z.string().min(2, { message: 'Tên tài sản phải có ít nhất 2 ký tự' }),
@@ -61,7 +63,7 @@ const addAssetSchema = z.object({
 });
 
 function StatusBadge({ status }: { status: Asset['status'] }) {
-  const variant: "default" | "secondary" | "destructive" | "outline" =
+  const variant: 'default' | 'secondary' | 'destructive' | 'outline' =
     status === 'in-use' ? 'default'
     : status === 'broken' ? 'destructive'
     : status === 'repairing' ? 'outline'
@@ -74,6 +76,15 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
     : 'Đã loại bỏ';
 
   return <Badge variant={variant}>{text}</Badge>;
+}
+
+const getStatusText = (status: Asset['status']) => {
+    switch (status) {
+        case 'in-use': return 'Đang sử dụng';
+        case 'broken': return 'Bị hỏng';
+        case 'repairing': return 'Đang sửa';
+        case 'disposed': return 'Đã loại bỏ';
+    }
 }
 
 
@@ -130,6 +141,35 @@ export default function RoomDetailPage() {
     setSheetOpen(false);
   }
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    
+    // We need to tell jsPDF to use a font that supports Vietnamese characters
+    // The default fonts do not. We'll need to load a font like 'Roboto'
+    // For now, let's proceed and the text might not render correctly.
+    // In a real app, we would embed a font file.
+    doc.addFont('/fonts/Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.setFont('Roboto');
+
+    doc.text(`Bao cao tai san - Phong: ${room.name}`, 14, 20);
+    doc.text(`Ngay xuat: ${new Date().toLocaleDateString()}`, 14, 28);
+
+    (doc as any).autoTable({
+        startY: 35,
+        head: [['Ma tai san', 'Ten tai san', 'Ngay them', 'Tinh trang']],
+        body: assets.map(asset => [
+            asset.id,
+            asset.name,
+            asset.dateAdded,
+            getStatusText(asset.status)
+        ]),
+        headStyles: { fillColor: [35, 87, 52] }, // Primary color
+        styles: { font: 'Roboto' }
+    });
+
+    doc.save(`bao-cao-tai-san-${room.id}.pdf`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -148,7 +188,7 @@ export default function RoomDetailPage() {
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">Tài sản ({assets.length})</h2>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
             Xuất PDF
           </Button>
