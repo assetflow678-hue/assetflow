@@ -85,9 +85,6 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
     <div className="relative w-full overflow-hidden rounded-lg">
         {/* Action Buttons */}
         <div className="absolute top-0 left-0 flex h-full items-center">
-            <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
-                <FilePenLine className="h-5 w-5" />
-            </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                      <Button variant="ghost" className="h-full w-[80px] rounded-none bg-destructive/20 text-destructive hover:bg-destructive/30">
@@ -108,6 +105,9 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
+                <FilePenLine className="h-5 w-5" />
+            </Button>
         </div>
       
         {/* Card Content */}
