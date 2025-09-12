@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 
 const SWIPE_THRESHOLD_OPEN = -80; // px to swipe left to reveal actions
 const SWIPE_THRESHOLD_CLOSE = 50; // px to swipe right to close actions
-const ACTIONS_WIDTH = 150; // Total width of the actions container
+const ACTIONS_WIDTH = 160; // Total width of the actions container
 
 interface SwipeableRoomCardProps {
   room: Room;
@@ -85,12 +85,12 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
     <div className="relative w-full overflow-hidden">
         {/* Action Buttons */}
         <div className="absolute top-0 right-0 flex h-full items-center">
-            <Button variant="ghost" className="h-full rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
+            <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
                 <FilePenLine className="h-5 w-5" />
             </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                     <Button variant="ghost" className="h-full rounded-none bg-destructive/20 text-destructive hover:bg-destructive/30">
+                     <Button variant="ghost" className="h-full w-[80px] rounded-none bg-destructive/20 text-destructive hover:bg-destructive/30">
                         <Trash2 className="h-5 w-5" />
                     </Button>
                 </AlertDialogTrigger>
