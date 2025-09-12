@@ -154,7 +154,7 @@ export default function AssetDetailPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Chi tiết</CardTitle>
+            <CardTitle className="text-base">Chi tiết</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-center gap-4">
@@ -179,7 +179,7 @@ export default function AssetDetailPage() {
             </div>
             <Separator />
             <div className="space-y-2">
-                <h3 className="font-medium">Lịch sử trạng thái</h3>
+                <h3 className="font-medium text-base">Lịch sử trạng thái</h3>
                 <ul className="space-y-1 text-sm text-muted-foreground list-disc pl-5">
                     {asset.history.slice().reverse().map((h, i) => (
                         <li key={i}>{h.date}: {statusTranslations[h.status as AssetStatus]}</li>
@@ -192,7 +192,7 @@ export default function AssetDetailPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Mã QR</CardTitle>
+                    <CardTitle className="text-base">Mã QR</CardTitle>
                     <CardDescription>Quét để xem hoặc in nhãn.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center text-center p-4">
@@ -212,7 +212,7 @@ export default function AssetDetailPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Hành động</CardTitle>
+                    <CardTitle className="text-base">Hành động</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-2">
                     <Dialog>

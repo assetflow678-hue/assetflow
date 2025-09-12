@@ -145,7 +145,7 @@ export default function RoomDetailPage() {
             asset.id,
             asset.name,
             asset.dateAdded,
-            statusTranslations[asset.status as AssetStatus]
+            asset.status
         ]),
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
     });
@@ -169,7 +169,7 @@ export default function RoomDetailPage() {
       </div>
       
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Tài sản ({assets.length})</h2>
+        <h2 className="text-base font-semibold">Tài sản ({assets.length})</h2>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
