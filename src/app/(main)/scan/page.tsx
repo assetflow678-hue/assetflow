@@ -46,14 +46,25 @@ export default function ScanPage() {
         setHasPermission(true);
 
         if (devices && devices.length) {
-            html5QrCode = new Html5Qrcode(QR_SCANNER_ELEMENT_ID);
+            html5QrCode = new Html5Qrcode(QR_SCANNER_ELEMENT_ID, {
+              formatsToSupport: [0], // 0 is QR_CODE
+              verbose: false
+            });
             const cameraId = devices.find(d => d.label.toLowerCase().includes('back'))?.id || devices[0].id;
             
             html5QrCode.start(
                 cameraId,
                 {
                     fps: 10,
-                    qrbox: { width: 250, height: 250 },
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                      const qrboxSize = Math.floor(minEdge * 0.7);
+                      return {
+                        width: qrboxSize,
+                        height: qrboxSize,
+                      };
+                    },
+                    aspectRatio: 1.0,
                 },
                 onScanSuccess,
                 onScanFailure
@@ -68,7 +79,6 @@ export default function ScanPage() {
       }
     }
 
-    // Request permission first, then start scanner
     if (hasPermission === null) {
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(() => {
