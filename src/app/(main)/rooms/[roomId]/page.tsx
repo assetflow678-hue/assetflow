@@ -233,7 +233,7 @@ export default function RoomDetailPage() {
       
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Tài sản ({assets.length})</h2>
-        <div className="flex flex-wrap gap-2 justify-end">
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
