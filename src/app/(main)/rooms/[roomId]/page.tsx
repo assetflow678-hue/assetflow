@@ -17,7 +17,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 import { getRoomById, getAssetsByRoomId } from '@/lib/mock-data';
-import type { Asset, Room } from '@/lib/types';
+import type { Asset, Room, AssetStatus } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +62,13 @@ const addAssetSchema = z.object({
   quantity: z.coerce.number().int().min(1, { message: 'Số lượng phải ít nhất là 1' }),
 });
 
+const statusTranslations: Record<AssetStatus, string> = {
+  'in-use': 'Đang sử dụng',
+  'broken': 'Hỏng',
+  'repairing': 'Đang sửa',
+  'disposed': 'Đã thanh lý',
+};
+
 function StatusBadge({ status }: { status: Asset['status'] }) {
   const variant: 'default' | 'secondary' | 'destructive' | 'outline' =
     status === 'in-use' ? 'default'
@@ -69,24 +76,8 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
     : status === 'repairing' ? 'outline'
     : 'secondary';
   
-  const text =
-    status === 'in-use' ? 'In Use'
-    : status === 'broken' ? 'Broken'
-    : status === 'repairing' ? 'Repairing'
-    : 'Disposed';
-
-  return <Badge variant={variant}>{text}</Badge>;
+  return <Badge variant={variant}>{statusTranslations[status]}</Badge>;
 }
-
-const getStatusText = (status: Asset['status']) => {
-    switch (status) {
-        case 'in-use': return 'In Use';
-        case 'broken': return 'Broken';
-        case 'repairing': return 'Repairing';
-        case 'disposed': return 'Disposed';
-    }
-}
-
 
 export default function RoomDetailPage() {
   const params = useParams<{ roomId: string }>();
@@ -154,7 +145,7 @@ export default function RoomDetailPage() {
             asset.id,
             asset.name,
             asset.dateAdded,
-            getStatusText(asset.status)
+            statusTranslations[asset.status as AssetStatus]
         ]),
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
     });
@@ -182,7 +173,7 @@ export default function RoomDetailPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
-            Export PDF
+            Xuất PDF
           </Button>
           <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>

@@ -53,18 +53,21 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 
+const statusTranslations: Record<AssetStatus, string> = {
+  'in-use': 'Đang sử dụng',
+  'broken': 'Hỏng',
+  'repairing': 'Đang sửa',
+  'disposed': 'Đã thanh lý',
+};
+
 function StatusBadge({ status }: { status: Asset['status'] }) {
   const variant: 'default' | 'secondary' | 'destructive' | 'outline' =
     status === 'in-use' ? 'default'
     : status === 'broken' ? 'destructive'
     : status === 'repairing' ? 'outline'
     : 'secondary';
-  const text =
-    status === 'in-use' ? 'In Use'
-    : status === 'broken' ? 'Broken'
-    : status === 'repairing' ? 'Repairing'
-    : 'Disposed';
-  return <Badge variant={variant}>{text}</Badge>;
+  
+  return <Badge variant={variant}>{statusTranslations[status]}</Badge>;
 }
 
 const statusUpdateSchema = z.object({
@@ -106,13 +109,13 @@ export default function AssetDetailPage() {
   const onStatusUpdate = (values: z.infer<typeof statusUpdateSchema>) => {
     const newHistoryEntry = { status: values.status, date: new Date().toISOString().split('T')[0] };
     setAsset(prev => prev ? {...prev, status: values.status, history: [...prev.history, newHistoryEntry]} : undefined);
-    toast({ title: 'Success', description: 'Asset status updated successfully.' });
+    toast({ title: 'Thành công', description: 'Trạng thái tài sản đã được cập nhật.' });
   };
 
   const onRoomMove = (values: z.infer<typeof roomMoveSchema>) => {
     const newRoom = getRoomById(values.roomId);
     setAsset(prev => prev ? {...prev, roomId: values.roomId} : undefined);
-    toast({ title: 'Success', description: `Asset moved to ${newRoom?.name}.` });
+    toast({ title: 'Thành công', description: `Tài sản đã được chuyển đến ${newRoom?.name}.` });
   };
 
   const handleGetAiSuggestion = async () => {
@@ -121,14 +124,14 @@ export default function AssetDetailPage() {
     const result = await getSuggestedStatus({
       assetId: asset.id,
       currentStatus: asset.status,
-      statusHistory: asset.history.map(h => h.status),
+      statusHistory: asset.history.map(h => statusTranslations[h.status as AssetStatus]),
       userInput: userInput,
     });
     setAiLoading(false);
     if (result.success && result.data) {
       setAiSuggestion(result.data.suggestedStatus);
     } else {
-      toast({ variant: 'destructive', title: 'Error', description: result.error });
+      toast({ variant: 'destructive', title: 'Lỗi', description: result.error });
     }
   };
 
@@ -151,35 +154,35 @@ export default function AssetDetailPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Details</CardTitle>
+            <CardTitle className="text-lg">Chi tiết</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-center gap-4">
               <Tag className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">Asset Name:</span>
+              <span className="font-medium">Tên tài sản:</span>
               <span>{asset.name}</span>
             </div>
             <div className="flex items-center gap-4">
               <Home className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">Room:</span>
+              <span className="font-medium">Phòng:</span>
               <Link href={`/rooms/${room?.id}`} className="text-primary hover:underline">{room?.name}</Link>
             </div>
             <div className="flex items-center gap-4">
               <CalendarDays className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">Date Added:</span>
+              <span className="font-medium">Ngày thêm:</span>
               <span>{asset.dateAdded}</span>
             </div>
             <div className="flex items-center gap-4">
               <Wrench className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">Status:</span>
+              <span className="font-medium">Trạng thái:</span>
               <StatusBadge status={asset.status} />
             </div>
             <Separator />
             <div className="space-y-2">
-                <h3 className="font-medium">Status History</h3>
+                <h3 className="font-medium">Lịch sử trạng thái</h3>
                 <ul className="space-y-1 text-sm text-muted-foreground list-disc pl-5">
                     {asset.history.slice().reverse().map((h, i) => (
-                        <li key={i}>{h.date}: {h.status}</li>
+                        <li key={i}>{h.date}: {statusTranslations[h.status as AssetStatus]}</li>
                     ))}
                 </ul>
             </div>
@@ -189,8 +192,8 @@ export default function AssetDetailPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">QR Code</CardTitle>
-                    <CardDescription>Scan to view details or print a label.</CardDescription>
+                    <CardTitle className="text-lg">Mã QR</CardTitle>
+                    <CardDescription>Quét để xem hoặc in nhãn.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center text-center p-4">
                     <div className="bg-white p-2 rounded-md border">
@@ -198,7 +201,7 @@ export default function AssetDetailPage() {
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
                             `https://assetflow.app/assets/${asset.id}`
                         )}`}
-                        alt={`QR code for ${asset.id}`}
+                        alt={`Mã QR cho ${asset.id}`}
                         width={150}
                         height={150}
                         />
@@ -209,16 +212,16 @@ export default function AssetDetailPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Actions</CardTitle>
+                    <CardTitle className="text-lg">Hành động</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm"><Wrench className="mr-2 h-4 w-4" />Update Status</Button>
+                            <Button variant="outline" size="sm"><Wrench className="mr-2 h-4 w-4" />Cập nhật trạng thái</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Update Status</DialogTitle>
+                              <DialogTitle>Cập nhật trạng thái</DialogTitle>
                             </DialogHeader>
                             <Form {...statusUpdateForm}>
                                 <form onSubmit={statusUpdateForm.handleSubmit(onStatusUpdate)} className="space-y-4">
@@ -227,19 +230,19 @@ export default function AssetDetailPage() {
                                     name="status"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>New Status</FormLabel>
+                                            <FormLabel>Trạng thái mới</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="in-use">In Use</SelectItem>
-                                                    <SelectItem value="broken">Broken</SelectItem>
-                                                    <SelectItem value="repairing">Repairing</SelectItem>
-                                                    <SelectItem value="disposed">Disposed</SelectItem>
+                                                    <SelectItem value="in-use">Đang sử dụng</SelectItem>
+                                                    <SelectItem value="broken">Hỏng</SelectItem>
+                                                    <SelectItem value="repairing">Đang sửa</SelectItem>
+                                                    <SelectItem value="disposed">Đã thanh lý</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </FormItem>
                                     )} />
-                                <DialogFooter><Button type="submit">Save Changes</Button></DialogFooter>
+                                <DialogFooter><Button type="submit">Lưu thay đổi</Button></DialogFooter>
                                 </form>
                             </Form>
                         </DialogContent>
@@ -247,11 +250,11 @@ export default function AssetDetailPage() {
 
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm"><Move className="mr-2 h-4 w-4" />Move Room</Button>
+                            <Button variant="outline" size="sm"><Move className="mr-2 h-4 w-4" />Chuyển phòng</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Move Room</DialogTitle>
+                              <DialogTitle>Chuyển phòng</DialogTitle>
                             </DialogHeader>
                             <Form {...roomMoveForm}>
                                 <form onSubmit={roomMoveForm.handleSubmit(onRoomMove)} className="space-y-4">
@@ -260,7 +263,7 @@ export default function AssetDetailPage() {
                                         name="roomId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>New Room</FormLabel>
+                                                <FormLabel>Phòng mới</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                     <SelectContent>
@@ -269,31 +272,31 @@ export default function AssetDetailPage() {
                                                 </Select>
                                             </FormItem>
                                         )} />
-                                    <DialogFooter><Button type="submit">Confirm Move</Button></DialogFooter>
+                                    <DialogFooter><Button type="submit">Xác nhận</Button></DialogFooter>
                                 </form>
                             </Form>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog>
-                        <DialogTrigger asChild><Button size="sm"><Sparkles className="mr-2 h-4 w-4" />AI Status Suggestion</Button></DialogTrigger>
+                        <DialogTrigger asChild><Button size="sm"><Sparkles className="mr-2 h-4 w-4" />Gợi ý trạng thái AI</Button></DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>AI Status Suggestion</DialogTitle>
-                                <DialogDescription>Describe the current condition of the asset for an AI suggestion.</DialogDescription>
+                                <DialogTitle>Gợi ý trạng thái AI</DialogTitle>
+                                <DialogDescription>Mô tả tình trạng hiện tại của tài sản để AI đưa ra gợi ý.</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
-                                <Textarea placeholder="e.g., Screen is cracked, won't power on..." value={userInput} onChange={e => setUserInput(e.target.value)} />
+                                <Textarea placeholder="Ví dụ: Màn hình bị nứt, không lên nguồn..." value={userInput} onChange={e => setUserInput(e.target.value)} />
                                 {aiSuggestion && (
                                     <div className="rounded-md border bg-accent/50 p-3 text-sm">
-                                        <p className="font-medium">AI Suggestion: <span className="font-bold">{aiSuggestion}</span></p>
+                                        <p className="font-medium">Gợi ý của AI: <span className="font-bold">{aiSuggestion}</span></p>
                                     </div>
                                 )}
                             </div>
                             <DialogFooter>
                                 <Button onClick={handleGetAiSuggestion} disabled={aiLoading}>
                                     {aiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                    Get Suggestion
+                                    Lấy gợi ý
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -305,5 +308,3 @@ export default function AssetDetailPage() {
     </div>
   );
 }
-
-    

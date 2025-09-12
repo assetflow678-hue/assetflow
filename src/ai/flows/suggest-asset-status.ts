@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
   {{userInput}}
   {{/if}}
 
-  Based on this information, suggest the next status for the asset. The status should be one of the following: in use, broken, repairing, disposed.
+  Based on this information, suggest the next status for the asset. The status should be one of the following: Đang sử dụng, Hỏng, Đang sửa, Đã thanh lý.
   Return ONLY the suggested status.
   `,
 });
