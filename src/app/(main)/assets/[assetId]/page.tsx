@@ -19,6 +19,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { getAssetById, getRoomById, getRooms } from '@/lib/mock-data';
 import type { Asset, AssetStatus, Room } from '@/lib/types';
+import { updateAssetStatus, moveAsset } from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +79,8 @@ export default function AssetDetailPage() {
   const assetData = getAssetById(params.assetId);
 
   const [asset, setAsset] = useState<Asset | undefined>(assetData);
+  const [isStatusUpdateOpen, setStatusUpdateOpen] = useState(false);
+  const [isRoomMoveOpen, setRoomMoveOpen] = useState(false);
   const { toast } = useToast();
 
   if (!asset) {
@@ -96,16 +99,27 @@ export default function AssetDetailPage() {
     defaultValues: { roomId: asset.roomId },
   });
 
-  const onStatusUpdate = (values: z.infer<typeof statusUpdateSchema>) => {
-    const newHistoryEntry = { status: values.status, date: new Date().toISOString().split('T')[0] };
-    setAsset(prev => prev ? {...prev, status: values.status, history: [...prev.history, newHistoryEntry]} : undefined);
-    toast({ title: 'Thành công', description: 'Trạng thái tài sản đã được cập nhật.' });
+  const onStatusUpdate = async (values: z.infer<typeof statusUpdateSchema>) => {
+    const result = await updateAssetStatus(asset.id, values.status);
+    if (result.success && result.asset) {
+        setAsset(result.asset);
+        toast({ title: 'Thành công', description: 'Trạng thái tài sản đã được cập nhật.' });
+        setStatusUpdateOpen(false);
+    } else {
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể cập nhật trạng thái.' });
+    }
   };
 
-  const onRoomMove = (values: z.infer<typeof roomMoveSchema>) => {
-    const newRoom = getRoomById(values.roomId);
-    setAsset(prev => prev ? {...prev, roomId: values.roomId} : undefined);
-    toast({ title: 'Thành công', description: `Tài sản đã được chuyển đến ${newRoom?.name}.` });
+  const onRoomMove = async (values: z.infer<typeof roomMoveSchema>) => {
+    const result = await moveAsset(asset.id, values.roomId);
+     if (result.success && result.asset) {
+        const newRoom = getRoomById(values.roomId);
+        setAsset(result.asset);
+        toast({ title: 'Thành công', description: `Tài sản đã được chuyển đến ${newRoom?.name}.` });
+        setRoomMoveOpen(false);
+    } else {
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể chuyển phòng.' });
+    }
   };
 
 
@@ -125,7 +139,7 @@ export default function AssetDetailPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2 h-full">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Chi tiết</CardTitle>
           </CardHeader>
@@ -188,7 +202,7 @@ export default function AssetDetailPage() {
                     <CardTitle className="text-base">Hành động</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-2">
-                    <Dialog>
+                    <Dialog open={isStatusUpdateOpen} onOpenChange={setStatusUpdateOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm"><Wrench className="mr-2 h-4 w-4" />Cập nhật trạng thái</Button>
                         </DialogTrigger>
@@ -221,7 +235,7 @@ export default function AssetDetailPage() {
                         </DialogContent>
                     </Dialog>
 
-                    <Dialog>
+                    <Dialog open={isRoomMoveOpen} onOpenChange={setRoomMoveOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm"><Move className="mr-2 h-4 w-4" />Chuyển phòng</Button>
                         </DialogTrigger>
