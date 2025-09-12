@@ -40,6 +40,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#F5F2EE',
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -51,7 +53,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen bg-background font-body antialiased',
+          'min-h-screen bg-background font-body antialiased hide-scrollbar',
           fontInter.variable,
           fontSpaceGrotesk.variable
         )}
