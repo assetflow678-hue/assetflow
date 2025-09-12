@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MainNav } from '@/components/main-nav';
 
 export default function MainLayout({
   children,
@@ -24,41 +23,38 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
-      <aside className="hidden border-r bg-card md:block">
-        <MainNav />
-      </aside>
-      <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-          <div className="md:hidden">
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          <Link
+            href="#"
+            className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          >
             <Logo />
-          </div>
-          
-          <div className="w-full flex-1" />
+            <span className="sr-only">AssetFlow</span>
+          </Link>
+          <Link
+            href="/rooms"
+            className="text-foreground transition-colors hover:text-foreground"
+          >
+            Phòng
+          </Link>
+        </nav>
 
-          <div className="hidden md:block w-full flex-1">
-            <form>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Tìm kiếm tài sản..."
-                  className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                />
-              </div>
-            </form>
-          </div>
-          
-          <div className="md:hidden">
-            <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-                <span className="sr-only">Tìm kiếm</span>
-            </Button>
-          </div>
-
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+          <form className="ml-auto flex-1 sm:flex-initial">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Tìm kiếm tài sản..."
+                className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+              />
+            </div>
+          </form>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
                   <AvatarImage src="https://picsum.photos/seed/user/32/32" />
                   <AvatarFallback>U</AvatarFallback>
@@ -67,7 +63,7 @@ export default function MainLayout({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+              <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Cài đặt</DropdownMenuItem>
               <DropdownMenuItem>Hỗ trợ</DropdownMenuItem>
@@ -75,10 +71,11 @@ export default function MainLayout({
               <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-        </header>
-        <main className="flex-1 p-4 pb-20 md:p-6 md:pb-6">{children}</main>
-      </div>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 pb-20 md:pb-8">
+        {children}
+      </main>
       <MobileNav />
     </div>
   );

@@ -72,7 +72,7 @@ export default function RoomsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold font-headline">Quản lý phòng</h1>
+        <h1 className="text-xl font-bold font-headline">Danh sách phòng</h1>
         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button size="sm">
