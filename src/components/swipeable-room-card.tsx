@@ -82,7 +82,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
   };
   
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative w-full overflow-hidden rounded-lg">
         {/* Action Buttons */}
         <div className="absolute top-0 right-0 flex h-full items-center">
             <Button variant="ghost" className="h-full w-[80px] rounded-none bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={onEdit}>
@@ -127,7 +127,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
                 }
             }}>
                 <Card className={cn(
-                    "h-full transition-colors rounded-none sm:rounded-lg border-x-0 sm:border-x",
+                    "h-full transition-colors",
                      dragX === 0 ? "hover:bg-accent" : ""
                 )}>
                     <CardHeader className="p-4 pb-2">
