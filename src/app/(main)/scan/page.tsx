@@ -99,7 +99,7 @@ export default function ScanPage() {
 
         <Card>
             <CardContent className="p-0">
-                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-video"/>
+                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square"/>
             </CardContent>
         </Card>
 
