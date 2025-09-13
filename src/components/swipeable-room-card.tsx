@@ -77,11 +77,6 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
     }
     dragStartX.current = 0;
   };
-
-  // Function to close the actions when clicking away or on the card
-  const closeActions = () => {
-    setDragX(0);
-  };
   
   return (
     <div className="relative w-full overflow-hidden rounded-lg">
@@ -123,13 +118,7 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
             onTouchMove={handleDragMove}
             onTouchEnd={handleDragEnd}
         >
-            <Link href={`/rooms/${room.id}`} draggable="false" onClickCapture={(e) => {
-                // Prevent navigation if card was swiped or is open
-                if (dragX !== 0 || Math.abs(startDragX.current - dragX) > 5) {
-                    e.preventDefault();
-                    closeActions();
-                }
-            }}>
+            <Link href={`/rooms/${room.id}`} draggable="false" className={cn(dragX !== 0 && "pointer-events-none")}>
                 <Card className={cn(
                     "h-full transition-colors rounded-lg",
                      dragX === 0 ? "hover:bg-accent" : ""
