@@ -7,7 +7,9 @@ import {
     addAssets,
     updateAssetStatus,
     moveAsset,
-    getAssetById
+    getAssetById,
+    deleteAsset,
+    updateAssetName,
 } from "@/lib/firestore-data";
 import type { Asset, AssetStatus, Room } from "@/lib/types";
 import { revalidatePath } from "next/cache";
@@ -52,7 +54,7 @@ export async function addAssetsAction(roomId: string, assetName: string, quantit
 export async function updateAssetStatusAction(assetId: string, newStatus: AssetStatus) {
     const result = await updateAssetStatus(assetId, newStatus);
     if (result.success) {
-        revalidatePath(`/assets/${assetId}`);
+        revalidatePath(`/assets/${encodeURIComponent(assetId)}`);
         const asset = await getAssetById(assetId);
         if (asset) {
            revalidatePath(`/rooms/${asset.roomId}`);
@@ -71,9 +73,34 @@ export async function moveAssetAction(assetId: string, newRoomId: string) {
     const result = await moveAsset(assetId, newRoomId);
 
     if (result.success) {
-        revalidatePath(`/assets/${assetId}`);
+        revalidatePath(`/assets/${encodeURIComponent(assetId)}`);
         revalidatePath(`/rooms/${oldRoomId}`);
         revalidatePath(`/rooms/${newRoomId}`);
+    }
+    return result;
+}
+
+export async function deleteAssetAction(assetId: string) {
+    const asset = await getAssetById(assetId);
+    if (!asset) {
+        return { success: false, message: "Asset not found" };
+    }
+    const roomId = asset.roomId;
+    const result = await deleteAsset(assetId);
+    if (result.success) {
+        revalidatePath(`/rooms/${roomId}`);
+    }
+    return { ...result, roomId }; // Return roomId for redirection
+}
+
+export async function updateAssetNameAction(assetId: string, newName: string) {
+    const result = await updateAssetName(assetId, newName);
+    if (result.success) {
+        revalidatePath(`/assets/${encodeURIComponent(assetId)}`);
+        const asset = await getAssetById(assetId);
+        if (asset) {
+           revalidatePath(`/rooms/${asset.roomId}`);
+        }
     }
     return result;
 }

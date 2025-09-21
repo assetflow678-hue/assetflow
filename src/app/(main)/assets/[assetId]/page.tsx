@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound, useParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   CalendarDays,
@@ -12,6 +12,7 @@ import {
   Wrench,
   Move,
   FilePenLine,
+  Trash2,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -19,7 +20,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { getAssetById, getRoomById, getRooms } from '@/lib/firestore-data';
 import type { Asset, AssetStatus, Room } from '@/lib/types';
-import { updateAssetStatusAction, moveAssetAction } from '@/app/actions';
+import {
+  updateAssetStatusAction,
+  moveAssetAction,
+  deleteAssetAction,
+  updateAssetNameAction,
+} from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +38,17 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
@@ -47,7 +64,9 @@ import {
     FormField,
     FormItem,
     FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const statusTranslations: Record<AssetStatus, string> = {
@@ -75,6 +94,10 @@ const roomMoveSchema = z.object({
     roomId: z.string(),
 });
 
+const nameUpdateSchema = z.object({
+    name: z.string().min(2, { message: 'Tên phải có ít nhất 2 ký tự.' }),
+});
+
 const AssetDetailSkeleton = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -100,6 +123,7 @@ const AssetDetailSkeleton = () => (
 
 export default function AssetDetailPage() {
   const params = useParams<{ assetId: string }>();
+  const router = useRouter();
 
   const [asset, setAsset] = useState<Asset | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
@@ -108,6 +132,7 @@ export default function AssetDetailPage() {
 
   const [isStatusUpdateOpen, setStatusUpdateOpen] = useState(false);
   const [isRoomMoveOpen, setRoomMoveOpen] = useState(false);
+  const [isNameEditOpen, setNameEditOpen] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -144,12 +169,18 @@ export default function AssetDetailPage() {
     defaultValues: { roomId: asset?.roomId || '' },
   });
 
+  const nameUpdateForm = useForm<z.infer<typeof nameUpdateSchema>>({
+    resolver: zodResolver(nameUpdateSchema),
+    defaultValues: { name: asset?.name || '' },
+  });
+
   useEffect(() => {
     if (asset) {
       statusUpdateForm.reset({ status: asset.status });
       roomMoveForm.reset({ roomId: asset.roomId });
+      nameUpdateForm.reset({ name: asset.name });
     }
-  }, [asset, statusUpdateForm, roomMoveForm]);
+  }, [asset, statusUpdateForm, roomMoveForm, nameUpdateForm]);
 
 
   const onStatusUpdate = async (values: z.infer<typeof statusUpdateSchema>) => {
@@ -177,6 +208,30 @@ export default function AssetDetailPage() {
         toast({ variant: 'destructive', title: 'Lỗi', description: result.message || 'Không thể chuyển phòng.' });
     }
   };
+
+  const onNameUpdate = async (values: z.infer<typeof nameUpdateSchema>) => {
+    if (!asset) return;
+    const result = await updateAssetNameAction(asset.id, values.name);
+    if (result.success && result.asset) {
+        setAsset(result.asset);
+        toast({ title: 'Thành công', description: 'Tên tài sản đã được cập nhật.' });
+        setNameEditOpen(false);
+    } else {
+        toast({ variant: 'destructive', title: 'Lỗi', description: result.message || 'Không thể cập nhật tên.' });
+    }
+  };
+
+  const onDelete = async () => {
+      if (!asset) return;
+      const result = await deleteAssetAction(asset.id);
+      if (result.success) {
+          toast({ title: 'Đã xóa!', description: `Tài sản ${asset.code} đã được xóa.`});
+          router.push(`/rooms/${result.roomId}`);
+      } else {
+          toast({ variant: 'destructive', title: 'Lỗi', description: result.message || 'Không thể xóa tài sản.'});
+      }
+  }
+
 
   if (loading) {
     return <AssetDetailSkeleton />;
@@ -249,7 +304,7 @@ export default function AssetDetailPage() {
                     <div className="bg-white p-2 rounded-md border">
                         <Image
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                            typeof window !== 'undefined' ? window.location.href : ''
+                            typeof window !== 'undefined' ? `${window.location.origin}/assets/${asset.id}` : ''
                         )}`}
                         alt={`Mã QR cho ${asset.code}`}
                         width={150}
@@ -265,6 +320,30 @@ export default function AssetDetailPage() {
                     <CardTitle className="text-base">Hành động</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-2">
+                    <Dialog open={isNameEditOpen} onOpenChange={setNameEditOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm"><FilePenLine className="mr-2 h-4 w-4" />Sửa tên</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Sửa tên tài sản</DialogTitle></DialogHeader>
+                            <Form {...nameUpdateForm}>
+                                <form onSubmit={nameUpdateForm.handleSubmit(onNameUpdate)} className="space-y-4">
+                                <FormField
+                                    control={nameUpdateForm.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tên mới</FormLabel>
+                                            <FormControl><Input {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                <DialogFooter><Button type="submit">Lưu thay đổi</Button></DialogFooter>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+
                     <Dialog open={isStatusUpdateOpen} onOpenChange={setStatusUpdateOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm"><Wrench className="mr-2 h-4 w-4" />Cập nhật trạng thái</Button>
@@ -327,6 +406,24 @@ export default function AssetDetailPage() {
                             </Form>
                         </DialogContent>
                     </Dialog>
+                    <Separator />
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Xóa tài sản</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Hành động này không thể được hoàn tác. Thao tác này sẽ xóa vĩnh viễn tài sản "{asset.code}" khỏi hệ thống.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction onClick={onDelete}>Xóa</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </CardContent>
             </Card>
         </div>

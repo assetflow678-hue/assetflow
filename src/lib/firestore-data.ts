@@ -11,8 +11,6 @@ import {
     where,
     writeBatch,
     runTransaction,
-    setDoc,
-    getCountFromServer,
 } from 'firebase/firestore';
 import type { Room, Asset, AssetStatus } from './types';
 
@@ -209,5 +207,42 @@ export const moveAsset = async (assetId: string, newRoomId: string): Promise<{ s
     } catch (error) {
         console.error(`Error moving asset ${assetId}: `, error);
         return { success: false, message: 'Failed to move asset.' };
+    }
+};
+
+export const deleteAsset = async (assetId: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+        const assetRef = doc(db, ASSETS_COLLECTION, assetId);
+        await deleteDoc(assetRef);
+        return { success: true };
+    } catch (error) {
+        console.error(`Error deleting asset ${assetId}: `, error);
+        return { success: false, message: 'Failed to delete asset.' };
+    }
+};
+
+export const updateAssetName = async (assetId: string, newName: string): Promise<{ success: boolean; asset?: Asset, message?: string }> => {
+    try {
+        const assetRef = doc(db, ASSETS_COLLECTION, assetId);
+        
+        const updatedAsset = await runTransaction(db, async (transaction) => {
+            const assetDoc = await transaction.get(assetRef);
+            if (!assetDoc.exists()) {
+                throw "Asset does not exist!";
+            }
+            const oldCode = assetDoc.data().code as string;
+            // A simple way to preserve the number part of the code
+            const codeNumber = oldCode.split('-').pop() || '0001';
+            const newCode = `${newName}-${codeNumber}`;
+
+            transaction.update(assetRef, { name: newName, code: newCode });
+            return { id: assetId, ...assetDoc.data(), name: newName, code: newCode } as Asset;
+        });
+
+        return { success: true, asset: updatedAsset };
+
+    } catch (error) {
+        console.error(`Error updating asset name for ${assetId}: `, error);
+        return { success: false, message: 'Failed to update asset name.' };
     }
 };
