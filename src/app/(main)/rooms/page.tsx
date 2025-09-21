@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { initialRooms } from '@/lib/mock-data';
+import { getRooms } from '@/lib/firestore-data';
+import { addRoomAction, updateRoomAction, deleteRoomAction } from '@/app/actions';
 import type { Room } from '@/lib/types';
 import { SwipeableRoomCard } from '@/components/swipeable-room-card';
 
@@ -37,10 +38,21 @@ const roomSchema = z.object({
 });
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+        setLoading(true);
+        const roomsData = await getRooms();
+        setRooms(roomsData);
+        setLoading(false);
+    }
+    fetchRooms();
+  }, []);
 
   const form = useForm<z.infer<typeof roomSchema>>({
     resolver: zodResolver(roomSchema),
@@ -62,39 +74,66 @@ export default function RoomsPage() {
     setSheetOpen(true);
   };
 
-  const handleDelete = (roomId: string) => {
-    setRooms((prev) => prev.filter((r) => r.id !== roomId));
-    toast({
-        variant: 'destructive',
-        title: 'Đã xóa!',
-        description: `Phòng đã được xóa khỏi hệ thống.`,
-    });
-  };
-
-  function onSubmit(values: z.infer<typeof roomSchema>) {
-    if (editingRoom) {
-      // Update existing room
-      setRooms(prev => prev.map(r => r.id === editingRoom.id ? {...r, ...values} : r));
+  const handleDelete = async (roomId: string) => {
+    const result = await deleteRoomAction(roomId);
+    if (result.success) {
+      setRooms((prev) => prev.filter((r) => r.id !== roomId));
       toast({
-        title: 'Thành công!',
-        description: `Thông tin phòng "${values.name}" đã được cập nhật.`,
+          variant: 'destructive',
+          title: 'Đã xóa!',
+          description: `Phòng đã được xóa khỏi hệ thống.`,
       });
     } else {
-      // Add new room
-      const newRoom: Room = {
-        id: `R${Math.floor(100 + Math.random() * 900)}`,
-        ...values,
-      };
-      setRooms((prev) => [newRoom, ...prev]);
       toast({
-        title: 'Thành công!',
-        description: `Phòng "${values.name}" đã được thêm.`,
+          variant: 'destructive',
+          title: 'Lỗi!',
+          description: result.message || 'Không thể xóa phòng.',
       });
+    }
+  };
+
+  async function onSubmit(values: z.infer<typeof roomSchema>) {
+    if (editingRoom) {
+      // Update existing room
+      const result = await updateRoomAction(editingRoom.id, values);
+      if (result.success && result.updatedRoom) {
+        setRooms(prev => prev.map(r => r.id === editingRoom.id ? result.updatedRoom! : r));
+        toast({
+          title: 'Thành công!',
+          description: `Thông tin phòng "${values.name}" đã được cập nhật.`,
+        });
+      } else {
+         toast({
+          variant: 'destructive',
+          title: 'Lỗi!',
+          description: result.message || 'Không thể cập nhật phòng.',
+        });
+      }
+    } else {
+      // Add new room
+      const result = await addRoomAction(values);
+       if (result.success && result.newRoom) {
+        setRooms((prev) => [result.newRoom!, ...prev]);
+        toast({
+            title: 'Thành công!',
+            description: `Phòng "${values.name}" đã được thêm.`,
+        });
+      } else {
+         toast({
+          variant: 'destructive',
+          title: 'Lỗi!',
+          description: result.message || 'Không thể thêm phòng.',
+        });
+      }
     }
 
     form.reset();
     setSheetOpen(false);
     setEditingRoom(null);
+  }
+
+  if (loading) {
+    return <div>Đang tải danh sách phòng...</div>;
   }
 
   return (

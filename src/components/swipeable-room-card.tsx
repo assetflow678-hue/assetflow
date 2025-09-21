@@ -1,7 +1,7 @@
 'use client';
 
 import type { Room } from '@/lib/types';
-import { getAssetsByRoomId } from '@/lib/mock-data';
+import { getAssetsByRoomId } from '@/lib/firestore-data';
 import {
   Card,
   CardContent,
@@ -23,7 +23,7 @@ import {
 import { Button } from './ui/button';
 import { User, Warehouse, Trash2, FilePenLine } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState, type TouchEvent, useMemo } from 'react';
+import { useRef, useState, type TouchEvent, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const SWIPE_THRESHOLD_OPEN = 80; // px to swipe right to reveal actions
@@ -43,7 +43,15 @@ export function SwipeableRoomCard({ room, onEdit, onDelete }: SwipeableRoomCardP
   const dragStartX = useRef(0);
   const startDragX = useRef(0); // The value of dragX when the drag started
 
-  const assetCount = useMemo(() => getAssetsByRoomId(room.id).length, [room.id]);
+  const [assetCount, setAssetCount] = useState(0);
+  
+  useEffect(() => {
+    // Since getAssetsByRoomId is now async, we fetch it inside useEffect
+    getAssetsByRoomId(room.id).then(assets => {
+      setAssetCount(assets.length);
+    });
+  }, [room.id]);
+
 
   const handleDragStart = (e: TouchEvent<HTMLDivElement>) => {
     setIsDragging(true);

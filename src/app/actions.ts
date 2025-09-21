@@ -1,32 +1,79 @@
 'use server';
 
-import { initialAssets } from "@/lib/mock-data";
-import type { Asset, AssetStatus } from "@/lib/types";
+import {
+    addRoom,
+    updateRoom,
+    deleteRoom,
+    addAssets,
+    updateAssetStatus,
+    moveAsset,
+    getAssetById
+} from "@/lib/firestore-data";
+import type { Asset, AssetStatus, Room } from "@/lib/types";
+import { revalidatePath } from "next/cache";
 
-export async function updateAssetStatus(assetId: string, newStatus: AssetStatus) {
-    console.log(`Updating status for ${assetId} to ${newStatus}`);
-    const assetIndex = initialAssets.findIndex(a => a.id === assetId);
-
-    if (assetIndex !== -1) {
-        const newHistoryEntry = { status: newStatus, date: new Date().toISOString().split('T')[0] };
-        initialAssets[assetIndex].status = newStatus;
-        initialAssets[assetIndex].history.push(newHistoryEntry);
-        console.log('Update successful');
-        return { success: true, asset: initialAssets[assetIndex] };
+// Room Actions
+export async function addRoomAction(data: { name: string; manager: string }) {
+    const result = await addRoom(data);
+    if (result.success) {
+        revalidatePath('/rooms');
     }
-    console.log('Asset not found');
-    return { success: false, message: 'Asset not found' };
+    return result;
 }
 
-export async function moveAsset(assetId: string, newRoomId: string) {
-    console.log(`Moving ${assetId} to ${newRoomId}`);
-    const assetIndex = initialAssets.findIndex(a => a.id === assetId);
-
-    if (assetIndex !== -1) {
-        initialAssets[assetIndex].roomId = newRoomId;
-        console.log('Move successful');
-        return { success: true, asset: initialAssets[assetIndex] };
+export async function updateRoomAction(roomId: string, data: { name: string; manager: string }) {
+    const result = await updateRoom(roomId, data);
+    if (result.success) {
+        revalidatePath('/rooms');
+        revalidatePath(`/rooms/${roomId}`);
     }
-    console.log('Asset not found');
-    return { success: false, message: 'Asset not found' };
+    return result;
+}
+
+export async function deleteRoomAction(roomId: string) {
+    const result = await deleteRoom(roomId);
+    if (result.success) {
+        revalidatePath('/rooms');
+    }
+    return result;
+}
+
+
+// Asset Actions
+export async function addAssetsAction(roomId: string, assetName: string, quantity: number) {
+    const result = await addAssets(roomId, assetName, quantity);
+    if (result.success) {
+        revalidatePath(`/rooms/${roomId}`);
+    }
+    return result;
+}
+
+
+export async function updateAssetStatusAction(assetId: string, newStatus: AssetStatus) {
+    const result = await updateAssetStatus(assetId, newStatus);
+    if (result.success) {
+        revalidatePath(`/assets/${assetId}`);
+        const asset = await getAssetById(assetId);
+        if (asset) {
+           revalidatePath(`/rooms/${asset.roomId}`);
+        }
+    }
+    return result;
+}
+
+export async function moveAssetAction(assetId: string, newRoomId: string) {
+    const oldAsset = await getAssetById(assetId);
+    if (!oldAsset) {
+        return { success: false, message: "Asset not found" };
+    }
+    const oldRoomId = oldAsset.roomId;
+
+    const result = await moveAsset(assetId, newRoomId);
+
+    if (result.success) {
+        revalidatePath(`/assets/${assetId}`);
+        revalidatePath(`/rooms/${oldRoomId}`);
+        revalidatePath(`/rooms/${newRoomId}`);
+    }
+    return result;
 }

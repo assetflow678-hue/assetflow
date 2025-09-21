@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
@@ -17,9 +17,9 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { getAssetById, getRoomById, getRooms } from '@/lib/mock-data';
+import { getAssetById, getRoomById, getRooms } from '@/lib/firestore-data';
 import type { Asset, AssetStatus, Room } from '@/lib/types';
-import { updateAssetStatus, moveAsset } from '@/app/actions';
+import { updateAssetStatusAction, moveAssetAction } from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,52 +76,90 @@ const roomMoveSchema = z.object({
 
 export default function AssetDetailPage() {
   const params = useParams<{ assetId: string }>();
-  const assetData = getAssetById(params.assetId);
 
-  const [asset, setAsset] = useState<Asset | undefined>(assetData);
+  const [asset, setAsset] = useState<Asset | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [allRooms, setAllRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [isStatusUpdateOpen, setStatusUpdateOpen] = useState(false);
   const [isRoomMoveOpen, setRoomMoveOpen] = useState(false);
   const { toast } = useToast();
-
-  if (!asset) {
-    notFound();
-  }
-  const room = getRoomById(asset.roomId);
-  const allRooms = getRooms();
   
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const assetData = await getAssetById(params.assetId as string);
+      if (!assetData) {
+        notFound();
+        return;
+      }
+      setAsset(assetData);
+
+      const [roomData, roomsData] = await Promise.all([
+        getRoomById(assetData.roomId),
+        getRooms()
+      ]);
+      setRoom(roomData || null);
+      setAllRooms(roomsData);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [params.assetId]);
+
+
   const statusUpdateForm = useForm<z.infer<typeof statusUpdateSchema>>({
     resolver: zodResolver(statusUpdateSchema),
-    defaultValues: { status: asset.status },
+    defaultValues: { status: asset?.status || 'in-use' },
   });
 
   const roomMoveForm = useForm<z.infer<typeof roomMoveSchema>>({
     resolver: zodResolver(roomMoveSchema),
-    defaultValues: { roomId: asset.roomId },
+    defaultValues: { roomId: asset?.roomId || '' },
   });
 
+  useEffect(() => {
+    if (asset) {
+      statusUpdateForm.reset({ status: asset.status });
+      roomMoveForm.reset({ roomId: asset.roomId });
+    }
+  }, [asset, statusUpdateForm, roomMoveForm]);
+
+
   const onStatusUpdate = async (values: z.infer<typeof statusUpdateSchema>) => {
-    const result = await updateAssetStatus(asset.id, values.status);
+    if (!asset) return;
+    const result = await updateAssetStatusAction(asset.id, values.status);
     if (result.success && result.asset) {
         setAsset(result.asset);
         toast({ title: 'Thành công', description: 'Trạng thái tài sản đã được cập nhật.' });
         setStatusUpdateOpen(false);
     } else {
-        toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể cập nhật trạng thái.' });
+        toast({ variant: 'destructive', title: 'Lỗi', description: result.message ||'Không thể cập nhật trạng thái.' });
     }
   };
 
   const onRoomMove = async (values: z.infer<typeof roomMoveSchema>) => {
-    const result = await moveAsset(asset.id, values.roomId);
+    if (!asset) return;
+    const result = await moveAssetAction(asset.id, values.roomId);
      if (result.success && result.asset) {
-        const newRoom = getRoomById(values.roomId);
+        const newRoom = allRooms.find(r => r.id === values.roomId);
         setAsset(result.asset);
+        setRoom(newRoom || null);
         toast({ title: 'Thành công', description: `Tài sản đã được chuyển đến ${newRoom?.name}.` });
         setRoomMoveOpen(false);
     } else {
-        toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể chuyển phòng.' });
+        toast({ variant: 'destructive', title: 'Lỗi', description: result.message || 'Không thể chuyển phòng.' });
     }
   };
 
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
+
+  if (!asset) {
+    return notFound();
+  }
 
   return (
     <div className="space-y-6">
@@ -186,7 +224,7 @@ export default function AssetDetailPage() {
                     <div className="bg-white p-2 rounded-md border">
                         <Image
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                            `https://assetflow.app/assets/${asset.id}`
+                            typeof window !== 'undefined' ? window.location.href : ''
                         )}`}
                         alt={`Mã QR cho ${asset.id}`}
                         width={150}

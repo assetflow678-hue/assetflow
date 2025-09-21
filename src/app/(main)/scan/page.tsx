@@ -25,7 +25,6 @@ export default function ScanPage() {
       
       try {
         const url = new URL(decodedText);
-        // This handles full URLs like https://assetflow.app/assets/R101-CHAIR-0001
         if (url.pathname.startsWith('/assets/')) {
             router.push(url.pathname);
             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
@@ -33,12 +32,13 @@ export default function ScanPage() {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
         }
       } catch (error) {
-        // This is a fallback for non-URL QR codes that might just contain an asset ID like "R101-CHAIR-0001"
-        if (decodedText.includes('-') && !decodedText.includes(' ')) {
+        // This is a fallback for non-URL QR codes that might just contain an asset ID
+        // A simple check for a pattern like RXXX-YYYY-ZZZZ
+        if (/^R\d{3}-\w+-\d{4}$/.test(decodedText)) {
              router.push(`/assets/${decodedText}`);
              toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
-            toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
+            toast({ variant: 'destructive', title: 'Lỗi', description: `Mã QR không hợp lệ: ${decodedText}` });
         }
       }
     };
@@ -48,6 +48,13 @@ export default function ScanPage() {
     };
     
     const startScanner = async () => {
+      // Ensure the element is in the DOM
+      const scannerElement = document.getElementById(QR_SCANNER_ELEMENT_ID);
+      if (!scannerElement) {
+        console.error(`Element with id ${QR_SCANNER_ELEMENT_ID} not found.`);
+        return;
+      }
+
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length) {
@@ -56,7 +63,6 @@ export default function ScanPage() {
               formatsToSupport: [0], // 0 is QR_CODE
               verbose: false
             });
-            // Try to find the back camera first
             const cameraId = devices.find(d => d.label.toLowerCase().includes('back'))?.id || devices[0].id;
             
             html5QrCode.start(
@@ -65,12 +71,8 @@ export default function ScanPage() {
                     fps: 10,
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
                       const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                      // Set a minimum size and a percentage of the viewfinder
                       const qrboxSize = Math.max(200, Math.floor(minEdge * 0.7));
-                      return {
-                        width: qrboxSize,
-                        height: qrboxSize,
-                      };
+                      return { width: qrboxSize, height: qrboxSize };
                     },
                     aspectRatio: 1.0,
                 },
@@ -90,19 +92,22 @@ export default function ScanPage() {
       }
     }
 
-    // Check for permissions first, then start the scanner.
-    Html5Qrcode.getCameras()
-      .then(devices => {
-        if (devices && devices.length > 0) {
-          startScanner();
-        } else {
-          setHasPermission(false);
+    const requestPermissionAndStart = async () => {
+        try {
+            // This is a common way to prompt for camera permission
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(track => track.stop()); // Stop using the camera immediately
+            startScanner();
+        } catch (err) {
+            setHasPermission(false);
+            console.error("Error getting camera permissions:", err);
         }
-      })
-      .catch(err => {
-        setHasPermission(false);
-        console.error("Error getting cameras:", err);
-      });
+    };
+    
+    // Only attempt to start scanner if permission state is not yet determined
+    if (hasPermission === null) {
+      requestPermissionAndStart();
+    }
 
 
     return () => {
@@ -110,11 +115,14 @@ export default function ScanPage() {
         html5QrCode.stop().then(() => {
           // console.log("QR Code scanning stopped successfully.");
         }).catch(error => {
-          console.error("Failed to clear html5-qrcode-scanner.", error);
+          // Don't log error if scanner element is gone, which is expected on navigation
+          if (document.getElementById(QR_SCANNER_ELEMENT_ID)) {
+             console.error("Failed to clear html5-qrcode-scanner.", error);
+          }
         });
       }
     };
-  }, [router, toast]);
+  }, [router, toast, hasPermission]);
 
   return (
     <div className="space-y-6">

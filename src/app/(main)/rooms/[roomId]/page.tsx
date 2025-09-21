@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   PlusCircle,
   MoreHorizontal,
@@ -18,7 +18,8 @@ import {
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-import { getRoomById, getAssetsByRoomId } from '@/lib/mock-data';
+import { getRoomById, getAssetsByRoomId } from '@/lib/firestore-data';
+import { addAssetsAction } from '@/app/actions';
 import type { Asset, Room, AssetStatus } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
@@ -89,12 +90,31 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
 
 export default function RoomDetailPage() {
   const params = useParams<{ roomId: string }>();
-  const roomData = useMemo(() => getRoomById(params.roomId), [params.roomId]);
-
-  const [room] = useState<Room | undefined>(roomData);
-  const [assets, setAssets] = useState<Asset[]>(() => getAssetsByRoomId(params.roomId));
+  const router = useRouter();
+  const [room, setRoom] = useState<Room | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchData = async () => {
+        setLoading(true);
+        const [roomData, assetsData] = await Promise.all([
+            getRoomById(params.roomId as string),
+            getAssetsByRoomId(params.roomId as string)
+        ]);
+        if (!roomData) {
+            router.push('/rooms');
+            toast({ variant: 'destructive', title: 'Lỗi', description: 'Không tìm thấy phòng.'});
+            return;
+        }
+        setRoom(roomData);
+        setAssets(assetsData);
+        setLoading(false);
+    }
+    fetchData();
+  }, [params.roomId, router, toast]);
 
   const form = useForm<z.infer<typeof addAssetSchema>>({
     resolver: zodResolver(addAssetSchema),
@@ -103,6 +123,10 @@ export default function RoomDetailPage() {
       quantity: 1,
     },
   });
+
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
 
   if (!room) {
     return (
@@ -113,31 +137,23 @@ export default function RoomDetailPage() {
     );
   }
 
-  function onSubmit(values: z.infer<typeof addAssetSchema>) {
-    const newAssets: Asset[] = [];
-    const assetTypeCount = assets.filter(a => a.name.toLowerCase() === values.name.toLowerCase()).length;
-    const assetCode = values.name.substring(0, 5).toUpperCase();
-    
-    for (let i = 0; i < values.quantity; i++) {
-        const newIndex = (assetTypeCount + i + 1).toString().padStart(4, '0');
-        const newAsset: Asset = {
-            id: `${room!.id}-${assetCode}-${newIndex}`,
-            name: values.name,
-            roomId: room!.id,
-            status: 'in-use',
-            dateAdded: new Date().toISOString().split('T')[0],
-            history: [{ status: 'in-use', date: new Date().toISOString().split('T')[0] }],
-        };
-        newAssets.push(newAsset);
+  async function onSubmit(values: z.infer<typeof addAssetSchema>) {
+    const result = await addAssetsAction(room!.id, values.name, values.quantity);
+    if (result.success && result.newAssets) {
+        setAssets(prev => [...result.newAssets!, ...prev]);
+        toast({
+          title: 'Thành công!',
+          description: `${values.quantity} ${values.name} đã được thêm vào phòng ${room!.name}.`,
+        });
+        form.reset();
+        setSheetOpen(false);
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Lỗi!',
+            description: result.message || 'Không thể thêm tài sản.',
+        });
     }
-
-    setAssets(prev => [...newAssets, ...prev]);
-    toast({
-      title: 'Thành công!',
-      description: `${values.quantity} ${values.name} đã được thêm vào phòng ${room.name}.`,
-    });
-    form.reset();
-    setSheetOpen(false);
   }
 
   const handleExportPDF = () => {
@@ -176,7 +192,9 @@ export default function RoomDetailPage() {
     toast({ title: 'Đang tạo PDF...', description: 'Quá trình này có thể mất một lúc.' });
 
     const qrCodePromises = assets.map(asset => {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://assetflow.app/assets/${asset.id}`)}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+          `${window.location.origin}/assets/${asset.id}`
+        )}`;
         return fetch(qrUrl)
             .then(response => response.blob())
             .then(blob => new Promise<string>((resolve, reject) => {
