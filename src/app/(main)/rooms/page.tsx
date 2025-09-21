@@ -31,11 +31,20 @@ import { getRooms } from '@/lib/firestore-data';
 import { addRoomAction, updateRoomAction, deleteRoomAction } from '@/app/actions';
 import type { Room } from '@/lib/types';
 import { SwipeableRoomCard } from '@/components/swipeable-room-card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const roomSchema = z.object({
   name: z.string().min(3, { message: 'Tên phòng phải có ít nhất 3 ký tự' }),
   manager: z.string().min(3, { message: 'Tên người quản lý phải có ít nhất 3 ký tự' }),
 });
+
+const RoomSkeleton = () => (
+    <div className="p-4 border rounded-lg">
+        <Skeleton className="h-6 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-4" />
+        <Skeleton className="h-4 w-1/3" />
+    </div>
+);
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -131,10 +140,6 @@ export default function RoomsPage() {
     setEditingRoom(null);
   }
 
-  if (loading) {
-    return <div>Đang tải danh sách phòng...</div>;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -199,14 +204,18 @@ export default function RoomsPage() {
         </Sheet>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => (
-           <SwipeableRoomCard 
-             key={room.id}
-             room={room}
-             onEdit={() => handleEdit(room)}
-             onDelete={() => handleDelete(room.id)}
-           />
-        ))}
+        {loading ? (
+            Array.from({ length: 3 }).map((_, index) => <RoomSkeleton key={index} />)
+        ) : (
+            rooms.map((room) => (
+                <SwipeableRoomCard 
+                    key={room.id}
+                    room={room}
+                    onEdit={() => handleEdit(room)}
+                    onDelete={() => handleDelete(room.id)}
+                />
+            ))
+        )}
       </div>
     </div>
   );
