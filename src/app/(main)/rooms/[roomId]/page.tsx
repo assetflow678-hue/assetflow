@@ -65,6 +65,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const addAssetSchema = z.object({
   name: z.string().min(2, { message: 'Tên tài sản phải có ít nhất 2 ký tự' }),
@@ -87,6 +88,50 @@ function StatusBadge({ status }: { status: Asset['status'] }) {
   
   return <Badge variant={variant}>{statusTranslations[status]}</Badge>;
 }
+
+const RoomDetailSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center gap-4">
+            <Skeleton className="h-8 w-8" />
+            <div>
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-4 w-32" />
+            </div>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+            <Skeleton className="h-6 w-32" />
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-9 w-9" />
+                <Skeleton className="h-9 w-32" />
+            </div>
+        </div>
+        <div className="rounded-lg border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                        <TableHead><Skeleton className="h-5 w-48" /></TableHead>
+                        <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                        <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                        <TableHead><span className="sr-only">Actions</span></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
+    </div>
+);
+
 
 export default function RoomDetailPage() {
   const params = useParams<{ roomId: string }>();
@@ -125,7 +170,7 @@ export default function RoomDetailPage() {
   });
 
   if (loading) {
-    return <div>Đang tải...</div>;
+    return <RoomDetailSkeleton />;
   }
 
   if (!room) {
@@ -417,3 +462,5 @@ export default function RoomDetailPage() {
     </div>
   );
 }
+
+    

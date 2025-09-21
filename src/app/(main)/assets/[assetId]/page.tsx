@@ -48,6 +48,7 @@ import {
     FormItem,
     FormLabel,
 } from '@/components/ui/form';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const statusTranslations: Record<AssetStatus, string> = {
   'in-use': 'Đang sử dụng',
@@ -73,6 +74,29 @@ const statusUpdateSchema = z.object({
 const roomMoveSchema = z.object({
     roomId: z.string(),
 });
+
+const AssetDetailSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center gap-4">
+            <Skeleton className="h-8 w-8" />
+            <div>
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-4 w-32" />
+            </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-4">
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-32 w-full" />
+            </div>
+            <div className="space-y-6">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-32 w-full" />
+            </div>
+        </div>
+    </div>
+);
+
 
 export default function AssetDetailPage() {
   const params = useParams<{ assetId: string }>();
@@ -154,7 +178,7 @@ export default function AssetDetailPage() {
   };
 
   if (loading) {
-    return <div>Đang tải...</div>;
+    return <AssetDetailSkeleton />;
   }
 
   if (!asset) {
@@ -309,3 +333,5 @@ export default function AssetDetailPage() {
     </div>
   );
 }
+
+    
