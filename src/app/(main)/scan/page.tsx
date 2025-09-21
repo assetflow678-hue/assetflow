@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Camera, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const QR_SCANNER_ELEMENT_ID = 'qr-scanner';
 
@@ -133,7 +134,11 @@ export default function ScanPage() {
 
         <Card>
             <CardContent className="p-0">
-                <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square bg-muted"/>
+                 {hasPermission === null ? (
+                    <Skeleton className="w-full aspect-square" />
+                ) : (
+                    <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square bg-muted"/>
+                )}
             </CardContent>
         </Card>
 
