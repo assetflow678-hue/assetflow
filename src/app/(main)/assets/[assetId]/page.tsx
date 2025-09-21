@@ -197,7 +197,7 @@ export default function AssetDetailPage() {
         </Button>
         <div>
           <h1 className="text-xl font-bold font-headline">{asset.name}</h1>
-          <p className="text-sm text-muted-foreground">{asset.id}</p>
+          <p className="text-sm text-muted-foreground">{asset.code}</p>
         </div>
       </div>
 
@@ -251,12 +251,12 @@ export default function AssetDetailPage() {
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
                             typeof window !== 'undefined' ? window.location.href : ''
                         )}`}
-                        alt={`Mã QR cho ${asset.id}`}
+                        alt={`Mã QR cho ${asset.code}`}
                         width={150}
                         height={150}
                         />
                     </div>
-                    <p className="mt-2 text-xs font-semibold tracking-widest">{asset.id}</p>
+                    <p className="mt-2 text-xs font-semibold tracking-widest">{asset.code}</p>
                 </CardContent>
             </Card>
             

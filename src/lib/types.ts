@@ -6,7 +6,8 @@ export type AssetHistory = {
 };
 
 export type Asset = {
-  id: string;
+  id: string; // Firestore document ID
+  code: string; // Human-readable code e.g., 'Ghế-0001'
   name: string;
   roomId: string;
   status: AssetStatus;

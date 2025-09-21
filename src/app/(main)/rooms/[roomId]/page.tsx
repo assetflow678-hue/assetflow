@@ -211,7 +211,7 @@ export default function RoomDetailPage() {
         startY: 35,
         head: [['Mã tài sản', 'Tên tài sản', 'Ngày thêm', 'Tình trạng']],
         body: assets.map(asset => [
-            asset.id,
+            asset.code,
             asset.name,
             asset.dateAdded,
             statusTranslations[asset.status]
@@ -269,7 +269,7 @@ export default function RoomDetailPage() {
 
             doc.addImage(base64, 'PNG', x, y, qrCodeSize, qrCodeSize);
             doc.setFontSize(8);
-            doc.text(asset.id, x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
+            doc.text(asset.code, x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
         });
 
         doc.save(`ma-qr-${room.id}.pdf`);
@@ -398,7 +398,7 @@ export default function RoomDetailPage() {
               assets.map((asset) => (
                 <TableRow key={asset.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/assets/${encodeURIComponent(asset.id)}`} className="hover:underline text-sm">{asset.id}</Link>
+                    <Link href={`/assets/${encodeURIComponent(asset.id)}`} className="hover:underline text-sm">{asset.code}</Link>
                   </TableCell>
                   <TableCell className="text-sm">{asset.name}</TableCell>
                   <TableCell className="text-sm">{asset.dateAdded}</TableCell>
@@ -441,7 +441,7 @@ export default function RoomDetailPage() {
                           <div className="flex justify-between items-start">
                               <div>
                                   <p className="font-semibold">{asset.name}</p>
-                                  <p className="text-xs text-muted-foreground">{asset.id}</p>
+                                  <p className="text-xs text-muted-foreground">{asset.code}</p>
                               </div>
                               <StatusBadge status={asset.status} />
                           </div>

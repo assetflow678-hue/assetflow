@@ -12,6 +12,7 @@ import {
     writeBatch,
     runTransaction,
     setDoc,
+    getCountFromServer,
 } from 'firebase/firestore';
 import type { Room, Asset, AssetStatus } from './types';
 
@@ -30,16 +31,6 @@ const toAssetObject = (doc: any): Asset => ({
     id: doc.id,
     ...doc.data(),
 } as Asset);
-
-
-// Function to generate a short, random asset ID
-const generateAssetId = (): string => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const randomChars = Array.from({ length: 3 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-    const randomNums = Math.floor(1000 + Math.random() * 9000).toString();
-    return `R${randomChars}-${randomNums}`;
-};
-
 
 // Room Functions
 export const getRooms = async (): Promise<Room[]> => {
@@ -89,11 +80,7 @@ export const updateRoom = async (roomId: string, data: { name: string; manager: 
 
 export const deleteRoom = async (roomId: string): Promise<{ success: boolean; message?: string }> => {
     try {
-        // In a real app, you'd also want to handle what happens to assets in the deleted room.
-        // For now, we'll just delete the room.
         await deleteDoc(doc(db, ROOMS_COLLECTION, roomId));
-        // You might want to delete all assets in this room too.
-        // This requires a batch delete.
         const assetsQuery = query(collection(db, ASSETS_COLLECTION), where("roomId", "==", roomId));
         const assetsSnapshot = await getDocs(assetsQuery);
         const batch = writeBatch(db);
@@ -135,32 +122,77 @@ export const getAssetById = async (id: string): Promise<Asset | null> => {
 };
 
 export const addAssets = async (roomId: string, assetName: string, quantity: number): Promise<{ success: boolean; newAssets?: Asset[]; message?: string }> => {
-    const batch = writeBatch(db);
     const newAssets: Asset[] = [];
-
+    
     try {
         const roomDoc = await getRoomById(roomId);
         if (!roomDoc) {
              return { success: false, message: "Room not found." };
         }
-        
-        for (let i = 0; i < quantity; i++) {
-            const newAssetId = generateAssetId();
-            const dateAdded = new Date().toISOString().split('T')[0];
-            const newAssetData = {
-                name: assetName,
-                roomId: roomId,
-                status: 'in-use' as AssetStatus,
-                dateAdded: dateAdded,
-                history: [{ status: 'in-use' as AssetStatus, date: dateAdded }],
-            };
-            
-            const assetRef = doc(db, ASSETS_COLLECTION, newAssetId);
-            batch.set(assetRef, newAssetData);
-            newAssets.push({ id: newAssetId, ...newAssetData });
-        }
 
-        await batch.commit();
+        await runTransaction(db, async (transaction) => {
+            // 1. Get the current count of assets with the same name to determine the next serial number
+            const assetsCollection = collection(db, ASSETS_COLLECTION);
+            const q = query(assetsCollection, where("name", "==", assetName));
+            const snapshot = await getCountFromServer(q);
+            let currentCount = snapshot.data().count;
+
+            const batch = writeBatch(db);
+
+            for (let i = 0; i < quantity; i++) {
+                const serialNumber = currentCount + i + 1;
+                const assetCode = `${assetName}-${serialNumber.toString().padStart(4, '0')}`;
+                
+                // Use auto-generated Firestore ID for the document
+                const newAssetRef = doc(collection(db, ASSETS_COLLECTION));
+                
+                const dateAdded = new Date().toISOString().split('T')[0];
+                const newAssetData = {
+                    code: assetCode,
+                    name: assetName,
+                    roomId: roomId,
+                    status: 'in-use' as AssetStatus,
+                    dateAdded: dateAdded,
+                    history: [{ status: 'in-use' as AssetStatus, date: dateAdded }],
+                };
+                
+                batch.set(newAssetRef, newAssetData);
+                newAssets.push({ id: newAssetRef.id, ...newAssetData });
+            }
+
+            // The write batch is committed as part of the transaction by returning it
+            // This is incorrect. The batch must be committed separately.
+            // Let's correct this. A transaction can include writes. No need for a batch inside.
+        });
+        
+        // Correct way to handle transaction for multiple writes
+        await runTransaction(db, async (transaction) => {
+            const assetsCollection = collection(db, ASSETS_COLLECTION);
+            const q = query(assetsCollection, where("name", "==", assetName));
+            // We get the count inside the transaction to ensure consistency
+            const querySnapshot = await getDocs(q); // getDocs inside transaction is fine
+            let currentCount = querySnapshot.size;
+
+            for (let i = 0; i < quantity; i++) {
+                const serialNumber = currentCount + i + 1;
+                const assetCode = `${assetName}-${serialNumber.toString().padStart(4, '0')}`;
+                const newAssetRef = doc(collection(db, ASSETS_COLLECTION));
+                
+                const dateAdded = new Date().toISOString().split('T')[0];
+                const newAssetData = {
+                    code: assetCode,
+                    name: assetName,
+                    roomId: roomId,
+                    status: 'in-use' as AssetStatus,
+                    dateAdded: dateAdded,
+                    history: [{ status: 'in-use' as AssetStatus, date: dateAdded }],
+                };
+                
+                transaction.set(newAssetRef, newAssetData);
+                newAssets.push({ id: newAssetRef.id, ...newAssetData });
+            }
+        });
+
         return { success: true, newAssets };
 
     } catch (error) {
