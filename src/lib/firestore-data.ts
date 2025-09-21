@@ -11,6 +11,7 @@ import {
     where,
     writeBatch,
     runTransaction,
+    setDoc,
 } from 'firebase/firestore';
 import type { Room, Asset, AssetStatus } from './types';
 
@@ -29,6 +30,15 @@ const toAssetObject = (doc: any): Asset => ({
     id: doc.id,
     ...doc.data(),
 } as Asset);
+
+
+// Function to generate a short, random asset ID
+const generateAssetId = (): string => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const randomChars = Array.from({ length: 3 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    const randomNums = Math.floor(1000 + Math.random() * 9000).toString();
+    return `R${randomChars}-${randomNums}`;
+};
 
 
 // Room Functions
@@ -133,17 +143,9 @@ export const addAssets = async (roomId: string, assetName: string, quantity: num
         if (!roomDoc) {
              return { success: false, message: "Room not found." };
         }
-
-        // To generate a unique asset code, we get the current count.
-        const assetsQuery = query(collection(db, ASSETS_COLLECTION), where("roomId", "==", roomId), where("name", "==", assetName));
-        const assetsSnapshot = await getDocs(assetsQuery);
-        const assetTypeCount = assetsSnapshot.size;
-
-        const assetCode = assetName.substring(0, 5).toUpperCase();
         
         for (let i = 0; i < quantity; i++) {
-            const newIndex = (assetTypeCount + i + 1).toString().padStart(4, '0');
-            const newAssetId = `${roomId}-${assetCode}-${newIndex}`;
+            const newAssetId = generateAssetId();
             const dateAdded = new Date().toISOString().split('T')[0];
             const newAssetData = {
                 name: assetName,

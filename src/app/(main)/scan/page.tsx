@@ -37,9 +37,9 @@ export default function ScanPage() {
         }
       } catch (error) {
         // This is a fallback for non-URL QR codes that might just contain an asset ID
-        // A simple check for a pattern like RXXX-YYYY-ZZZZ
+        // A simple check for a pattern like RXXX-YYYY
         const assetId = decodedText;
-        if (/^R\d{3}-\w+-\d{4}$/.test(assetId)) {
+        if (/^R[A-Z0-9]{3}-\d{4}$/.test(assetId)) {
              router.push(`/assets/${encodeURIComponent(assetId)}`);
              toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
