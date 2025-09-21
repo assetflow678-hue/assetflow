@@ -113,7 +113,8 @@ export default function AssetDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const assetData = await getAssetById(params.assetId as string);
+      const assetId = decodeURIComponent(params.assetId as string);
+      const assetData = await getAssetById(assetId);
       if (!assetData) {
         notFound();
         return;
@@ -333,5 +334,3 @@ export default function AssetDetailPage() {
     </div>
   );
 }
-
-    

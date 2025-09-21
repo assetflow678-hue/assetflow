@@ -109,10 +109,10 @@ const RoomDetailSkeleton = () => (
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[30%]"><Skeleton className="h-5 w-full" /></TableHead>
-                        <TableHead className="w-[30%]"><Skeleton className="h-5 w-full" /></TableHead>
-                        <TableHead className="w-[20%]"><Skeleton className="h-5 w-full" /></TableHead>
-                        <TableHead className="w-[15%]"><Skeleton className="h-5 w-full" /></TableHead>
+                        <TableHead className="w-[30%]"><Skeleton className="h-5 w-[80%]" /></TableHead>
+                        <TableHead className="w-[30%]"><Skeleton className="h-5 w-[80%]" /></TableHead>
+                        <TableHead className="w-[20%]"><Skeleton className="h-5 w-[70%]" /></TableHead>
+                        <TableHead className="w-[15%]"><Skeleton className="h-5 w-[90%]" /></TableHead>
                         <TableHead className="w-[5%]"><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -238,7 +238,7 @@ export default function RoomDetailPage() {
 
     const qrCodePromises = assets.map(asset => {
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-          `https://assetflow-three.vercel.app/assets/${asset.id}`
+          `https://assetflow-three.vercel.app/assets/${encodeURIComponent(asset.id)}`
         )}`;
         return fetch(qrUrl)
             .then(response => response.blob())
@@ -398,7 +398,7 @@ export default function RoomDetailPage() {
               assets.map((asset) => (
                 <TableRow key={asset.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/assets/${asset.id}`} className="hover:underline text-sm">{asset.id}</Link>
+                    <Link href={`/assets/${encodeURIComponent(asset.id)}`} className="hover:underline text-sm">{asset.id}</Link>
                   </TableCell>
                   <TableCell className="text-sm">{asset.name}</TableCell>
                   <TableCell className="text-sm">{asset.dateAdded}</TableCell>
@@ -413,7 +413,7 @@ export default function RoomDetailPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                            <Link href={`/assets/${asset.id}`}>Xem chi tiết</Link>
+                            <Link href={`/assets/${encodeURIComponent(asset.id)}`}>Xem chi tiết</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -435,7 +435,7 @@ export default function RoomDetailPage() {
        <div className="md:hidden space-y-2">
           {assets.length > 0 ? (
               assets.map((asset) => (
-                <Link href={`/assets/${asset.id}`} key={asset.id}>
+                <Link href={`/assets/${encodeURIComponent(asset.id)}`} key={asset.id}>
                   <Card className="bg-background hover:bg-accent transition-colors">
                       <CardContent className="p-3 space-y-1.5 text-sm">
                           <div className="flex justify-between items-start">
@@ -462,5 +462,3 @@ export default function RoomDetailPage() {
     </div>
   );
 }
-
-    

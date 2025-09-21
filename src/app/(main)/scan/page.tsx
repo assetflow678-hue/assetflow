@@ -26,8 +26,11 @@ export default function ScanPage() {
       
       try {
         const url = new URL(decodedText);
-        if (url.pathname.startsWith('/assets/')) {
-            router.push(url.pathname);
+        // We only care about the path, so we use the path from the scanned URL
+        const path = url.pathname;
+
+        if (path.startsWith('/assets/')) {
+            router.push(path);
             toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
@@ -35,8 +38,9 @@ export default function ScanPage() {
       } catch (error) {
         // This is a fallback for non-URL QR codes that might just contain an asset ID
         // A simple check for a pattern like RXXX-YYYY-ZZZZ
-        if (/^R\d{3}-\w+-\d{4}$/.test(decodedText)) {
-             router.push(`/assets/${decodedText}`);
+        const assetId = decodedText;
+        if (/^R\d{3}-\w+-\d{4}$/.test(assetId)) {
+             router.push(`/assets/${encodeURIComponent(assetId)}`);
              toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
             toast({ variant: 'destructive', title: 'Lỗi', description: `Mã QR không hợp lệ: ${decodedText}` });
@@ -135,7 +139,7 @@ export default function ScanPage() {
         <Card>
             <CardContent className="p-0">
                  {hasPermission === null ? (
-                    <Skeleton className="w-full aspect-square" />
+                    <Skeleton className="w-full aspect-square animate-pulse" />
                 ) : (
                     <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square bg-muted"/>
                 )}
