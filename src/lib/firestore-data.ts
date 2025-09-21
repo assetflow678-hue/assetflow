@@ -129,48 +129,11 @@ export const addAssets = async (roomId: string, assetName: string, quantity: num
         if (!roomDoc) {
              return { success: false, message: "Room not found." };
         }
-
-        await runTransaction(db, async (transaction) => {
-            // 1. Get the current count of assets with the same name to determine the next serial number
-            const assetsCollection = collection(db, ASSETS_COLLECTION);
-            const q = query(assetsCollection, where("name", "==", assetName));
-            const snapshot = await getCountFromServer(q);
-            let currentCount = snapshot.data().count;
-
-            const batch = writeBatch(db);
-
-            for (let i = 0; i < quantity; i++) {
-                const serialNumber = currentCount + i + 1;
-                const assetCode = `${assetName}-${serialNumber.toString().padStart(4, '0')}`;
-                
-                // Use auto-generated Firestore ID for the document
-                const newAssetRef = doc(collection(db, ASSETS_COLLECTION));
-                
-                const dateAdded = new Date().toISOString().split('T')[0];
-                const newAssetData = {
-                    code: assetCode,
-                    name: assetName,
-                    roomId: roomId,
-                    status: 'in-use' as AssetStatus,
-                    dateAdded: dateAdded,
-                    history: [{ status: 'in-use' as AssetStatus, date: dateAdded }],
-                };
-                
-                batch.set(newAssetRef, newAssetData);
-                newAssets.push({ id: newAssetRef.id, ...newAssetData });
-            }
-
-            // The write batch is committed as part of the transaction by returning it
-            // This is incorrect. The batch must be committed separately.
-            // Let's correct this. A transaction can include writes. No need for a batch inside.
-        });
         
-        // Correct way to handle transaction for multiple writes
         await runTransaction(db, async (transaction) => {
             const assetsCollection = collection(db, ASSETS_COLLECTION);
             const q = query(assetsCollection, where("name", "==", assetName));
-            // We get the count inside the transaction to ensure consistency
-            const querySnapshot = await getDocs(q); // getDocs inside transaction is fine
+            const querySnapshot = await getDocs(q);
             let currentCount = querySnapshot.size;
 
             for (let i = 0; i < quantity; i++) {
