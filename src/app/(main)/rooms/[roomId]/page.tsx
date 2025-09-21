@@ -238,7 +238,7 @@ export default function RoomDetailPage() {
 
     const qrCodePromises = assets.map(asset => {
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-          `${window.location.origin}/assets/${asset.id}`
+          `https://assetflow-three.vercel.app/assets/${asset.id}`
         )}`;
         return fetch(qrUrl)
             .then(response => response.blob())
