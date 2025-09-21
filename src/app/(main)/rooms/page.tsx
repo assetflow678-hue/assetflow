@@ -79,7 +79,6 @@ export default function RoomsPage() {
     if (result.success) {
       setRooms((prev) => prev.filter((r) => r.id !== roomId));
       toast({
-          variant: 'destructive',
           title: 'Đã xóa!',
           description: `Phòng đã được xóa khỏi hệ thống.`,
       });
