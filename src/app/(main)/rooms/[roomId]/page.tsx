@@ -21,6 +21,7 @@ import 'jspdf-autotable';
 import { getRoomById, getAssetsByRoomId } from '@/lib/firestore-data';
 import { addAssetsAction } from '@/app/actions';
 import type { Asset, Room, AssetStatus } from '@/lib/types';
+import { removeDiacritics } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -204,27 +205,32 @@ export default function RoomDetailPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    doc.text(`Báo cáo tài sản - Phòng: ${room.name}`, 14, 20);
-    doc.text(`Ngày xuất: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(removeDiacritics(`Bao cao tai san - Phong: ${room.name}`), 14, 20);
+    doc.text(removeDiacritics(`Ngay xuat: ${new Date().toLocaleDateString()}`), 14, 28);
 
     (doc as any).autoTable({
         startY: 35,
-        head: [['Mã tài sản', 'Tên tài sản', 'Ngày thêm', 'Tình trạng']],
+        head: [[
+            'Ma tai san', 
+            'Ten tai san', 
+            'Ngay them', 
+            'Tinh trang'
+        ].map(h => removeDiacritics(h))],
         body: assets.map(asset => [
-            asset.code,
-            asset.name,
-            asset.dateAdded,
-            statusTranslations[asset.status]
+            removeDiacritics(asset.code),
+            removeDiacritics(asset.name),
+            removeDiacritics(asset.dateAdded),
+            removeDiacritics(statusTranslations[asset.status])
         ]),
         headStyles: { fillColor: [35, 87, 52] }, // Primary color
     });
 
-    doc.save(`baocao-taisan-${room.id}.pdf`);
+    doc.save(removeDiacritics(`baocao-taisan-${room.id}.pdf`));
   };
 
   const handleExportQRCodesPDF = async () => {
     const doc = new jsPDF();
-    doc.text(`Mã QR cho Phòng: ${room.name}`, 14, 20);
+    doc.text(removeDiacritics(`Ma QR cho Phong: ${room.name}`), 14, 20);
 
     const qrCodeSize = 28; // mm
     const labelHeight = 10; // mm for the text below QR
@@ -238,7 +244,7 @@ export default function RoomDetailPage() {
 
     const qrCodePromises = assets.map(asset => {
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-          `https://assetflow-three.vercel.app/assets/${encodeURIComponent(asset.id)}`
+          `${window.location.origin}/assets/${encodeURIComponent(asset.id)}`
         )}`;
         return fetch(qrUrl)
             .then(response => response.blob())
@@ -258,7 +264,7 @@ export default function RoomDetailPage() {
             
             if (i > 0 && i % itemsPerPage === 0) {
                 doc.addPage();
-                doc.text(`Mã QR cho Phòng: ${room.name} (Trang ${Math.floor(i / itemsPerPage) + 1})`, 14, 20);
+                doc.text(removeDiacritics(`Ma QR cho Phong: ${room.name} (Trang ${Math.floor(i / itemsPerPage) + 1})`), 14, 20);
             }
 
             const rowIndex = i % itemsPerPage;
@@ -269,10 +275,10 @@ export default function RoomDetailPage() {
 
             doc.addImage(base64, 'PNG', x, y, qrCodeSize, qrCodeSize);
             doc.setFontSize(8);
-            doc.text(asset.code, x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
+            doc.text(removeDiacritics(asset.code), x + qrCodeSize / 2, y + qrCodeSize + 5, { align: 'center' });
         });
 
-        doc.save(`ma-qr-${room.id}.pdf`);
+        doc.save(removeDiacritics(`ma-qr-${room.id}.pdf`));
         toast({ title: 'Đã tạo PDF thành công!', description: `Đang tải xuống file PDF cho phòng ${room.name}` });
     } catch (error) {
         console.error("Error generating QR codes PDF:", error);
