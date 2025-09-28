@@ -25,8 +25,8 @@ export default function ScanPage() {
       }
       
       try {
+        // Try to parse as URL first (fallback for old QR codes)
         const url = new URL(decodedText);
-        // We only care about the path, so we use the path from the scanned URL
         const path = url.pathname;
 
         if (path.startsWith('/assets/')) {
@@ -36,10 +36,10 @@ export default function ScanPage() {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã QR không hợp lệ.' });
         }
       } catch (error) {
-        // This is a fallback for non-URL QR codes that might just contain an asset ID
-        // A simple check for a pattern like RXXX-YYYY
+        // If it's not a URL, assume it's an asset ID
         const assetId = decodedText;
-        if (/^R[A-Z0-9]{3}-\d{4}$/.test(assetId)) {
+        // Basic validation: check if it's not empty and has a reasonable length
+        if (assetId && assetId.length > 5 && assetId.length < 50) {
              router.push(`/assets/${encodeURIComponent(assetId)}`);
              toast({ title: 'Thành công', description: 'Đã tìm thấy tài sản.' });
         } else {
