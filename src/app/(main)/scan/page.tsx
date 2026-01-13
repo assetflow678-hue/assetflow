@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Camera, AlertCircle } from 'lucide-react';
+import { Camera, AlertCircle, SwitchCamera } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 const QR_SCANNER_ELEMENT_ID = 'qr-scanner';
 
@@ -17,9 +18,10 @@ export default function ScanPage() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [cameras, setCameras] = useState<{ id: string; label: string }[]>([]);
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
-  // Function to handle successful scan
-  const onScanSuccess = (decodedText: string) => {
+  const onScanSuccess = useCallback((decodedText: string) => {
     // Stop scanner on success to prevent multiple scans
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => {
@@ -50,15 +52,13 @@ export default function ScanPage() {
          toast({ variant: 'destructive', title: 'Lỗi', description: `Mã QR không hợp lệ: ${decodedText}` });
        }
     }
-  };
+  }, [router, toast]);
 
   const onScanFailure = (error: any) => {
     // This callback is called frequently, so we don't show a toast here.
-    // We can log it for debugging if needed, but it's often just "QR code not found".
   };
 
   useEffect(() => {
-    // Create a scanner instance if it doesn't exist
     if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode(QR_SCANNER_ELEMENT_ID, {
             formatsToSupport: [0], // 0 = QR_CODE
@@ -66,72 +66,99 @@ export default function ScanPage() {
         });
     }
 
-    const scanner = scannerRef.current;
-
-    // Request camera permission and start scanner
-    const requestPermissionAndStart = async () => {
-      try {
-        const devices = await Html5Qrcode.getCameras();
+    Html5Qrcode.getCameras()
+      .then(devices => {
         if (devices && devices.length) {
+          setCameras(devices);
+          // Prefer the back camera as default
+          const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
+          setSelectedCameraId(backCamera?.id || devices[0].id);
           setHasPermission(true);
-          
-          // Prefer the back camera
-          const cameraId = devices.find(d => d.label.toLowerCase().includes('back'))?.id || devices[0].id;
-          
-          // Start scanning
-          await scanner.start(
-            cameraId,
-            {
-              fps: 10,
-              qrbox: (viewfinderWidth, viewfinderHeight) => {
-                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const qrboxSize = Math.max(200, Math.floor(minEdge * 0.7));
-                return { width: qrboxSize, height: qrboxSize };
-              },
-              aspectRatio: 1.0,
-            },
-            onScanSuccess,
-            onScanFailure
-          );
         } else {
-            setScanError("Không tìm thấy thiết bị camera nào.");
-            setHasPermission(false);
+          setHasPermission(false);
+          setScanError("Không tìm thấy thiết bị camera nào.");
         }
-      } catch (err: any) {
-        console.error("Lỗi khi yêu cầu quyền camera:", err);
-        setScanError("Không thể truy cập camera. Vui lòng cấp quyền trong cài đặt trình duyệt.");
+      })
+      .catch(err => {
         setHasPermission(false);
-      }
-    };
-    
-    requestPermissionAndStart();
-
+        setScanError("Không thể truy cập camera. Vui lòng cấp quyền trong cài đặt trình duyệt.");
+        console.error("Lỗi khi yêu cầu quyền camera:", err);
+      });
+      
     // Cleanup function to stop the scanner when the component unmounts
     return () => {
-      if (scanner && scanner.isScanning) {
-        scanner.stop().catch(err => {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(err => {
           // This can sometimes fail if the component unmounts too quickly.
           // It's usually safe to ignore.
         });
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on component mount
+  }, []);
+
+  useEffect(() => {
+      if (selectedCameraId && hasPermission) {
+          const scanner = scannerRef.current;
+          if (scanner) {
+              // Stop scanning before starting new one
+              if(scanner.isScanning) {
+                  scanner.stop();
+              }
+              
+              scanner.start(
+                  selectedCameraId,
+                  {
+                      fps: 10,
+                      qrbox: (viewfinderWidth, viewfinderHeight) => {
+                          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                          const qrboxSize = Math.max(200, Math.floor(minEdge * 0.7));
+                          return { width: qrboxSize, height: qrboxSize };
+                      },
+                      aspectRatio: 1.0,
+                  },
+                  onScanSuccess,
+                  onScanFailure
+              ).catch(err => {
+                  setScanError("Không thể khởi động camera. Hãy thử lại.");
+                  console.error("Lỗi khi khởi động scanner:", err);
+              });
+          }
+      }
+  }, [selectedCameraId, hasPermission, onScanSuccess]);
+
+  const handleSwitchCamera = () => {
+    if (cameras.length > 1 && selectedCameraId) {
+      const currentIndex = cameras.findIndex(c => c.id === selectedCameraId);
+      const nextIndex = (currentIndex + 1) % cameras.length;
+      setSelectedCameraId(cameras[nextIndex].id);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Camera className="h-6 w-6" />
-        <h1 className="text-xl font-bold font-headline">Quét mã QR tài sản</h1>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+            <Camera className="h-6 w-6" />
+            <h1 className="text-xl font-bold font-headline">Quét mã QR tài sản</h1>
+        </div>
+        {cameras.length > 1 && (
+            <Button variant="outline" size="icon" onClick={handleSwitchCamera}>
+                <SwitchCamera className="h-5 w-5" />
+                <span className="sr-only">Đổi camera</span>
+            </Button>
+        )}
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 relative">
           <div id={QR_SCANNER_ELEMENT_ID} className="w-full rounded-md overflow-hidden aspect-square bg-muted" />
           {hasPermission === null && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background">
-                <Skeleton className="w-full h-full" />
-                <p className="absolute text-muted-foreground">Đang yêu cầu quyền truy cập camera...</p>
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                <div className="text-center">
+                    <Skeleton className="w-24 h-24 rounded-full mx-auto mb-4" />
+                    <p className="text-muted-foreground">Đang yêu cầu quyền truy cập camera...</p>
+                </div>
             </div>
           )}
         </CardContent>
