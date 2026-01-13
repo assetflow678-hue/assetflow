@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, type CameraDevice } from 'html5-qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Camera, AlertCircle, SwitchCamera } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function ScanPage() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const [cameras, setCameras] = useState<{ id: string; label: string }[]>([]);
+  const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
   const onScanSuccess = useCallback((decodedText: string) => {
@@ -97,34 +97,40 @@ export default function ScanPage() {
   }, []);
 
   useEffect(() => {
+    const startScanner = async () => {
       if (selectedCameraId && hasPermission) {
-          const scanner = scannerRef.current;
-          if (scanner) {
-              // Stop scanning before starting new one
-              if(scanner.isScanning) {
-                  scanner.stop();
-              }
-              
-              scanner.start(
-                  selectedCameraId,
-                  {
-                      fps: 10,
-                      qrbox: (viewfinderWidth, viewfinderHeight) => {
-                          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                          const qrboxSize = Math.max(200, Math.floor(minEdge * 0.7));
-                          return { width: qrboxSize, height: qrboxSize };
-                      },
-                      aspectRatio: 1.0,
-                  },
-                  onScanSuccess,
-                  onScanFailure
-              ).catch(err => {
-                  setScanError("Không thể khởi động camera. Hãy thử lại.");
-                  console.error("Lỗi khi khởi động scanner:", err);
-              });
+        const scanner = scannerRef.current;
+        if (scanner) {
+          try {
+            if (scanner.isScanning) {
+              await scanner.stop();
+            }
+
+            await scanner.start(
+              selectedCameraId,
+              {
+                fps: 10,
+                qrbox: (viewfinderWidth, viewfinderHeight) => {
+                  const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                  const qrboxSize = Math.max(200, Math.floor(minEdge * 0.7));
+                  return { width: qrboxSize, height: qrboxSize };
+                },
+                aspectRatio: 1.0,
+              },
+              onScanSuccess,
+              onScanFailure
+            );
+          } catch (err) {
+            setScanError("Không thể khởi động camera. Hãy thử lại.");
+            console.error("Lỗi khi khởi động scanner:", err);
           }
+        }
       }
+    };
+
+    startScanner();
   }, [selectedCameraId, hasPermission, onScanSuccess]);
+
 
   const handleSwitchCamera = () => {
     if (cameras.length > 1 && selectedCameraId) {
