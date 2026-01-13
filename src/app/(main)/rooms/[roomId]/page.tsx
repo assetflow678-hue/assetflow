@@ -243,9 +243,13 @@ export default function RoomDetailPage() {
     toast({ title: 'Đang tạo PDF...', description: 'Quá trình này có thể mất một lúc.' });
 
     const qrCodePromises = assets.map(asset => {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(asset.id)}`;
-        return fetch(qrUrl)
-            .then(response => response.blob())
+        const fullUrl = `${window.location.origin}/assets/${encodeURIComponent(asset.id)}`;
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(fullUrl)}`;
+        return fetch(qrApiUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok.');
+                return response.blob();
+            })
             .then(blob => new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
